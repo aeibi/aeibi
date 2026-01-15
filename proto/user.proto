@@ -1,0 +1,210 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "aeibi/api;api";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+// UserService
+service UserService {
+  // POST /api/v1/users 创建用户
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users"
+      body: "*"
+    };
+  }
+
+  // GET /api/v1/users 列表
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users"
+    };
+  }
+
+  // GET /api/v1/users/{uid} 详情
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{uid}"
+    };
+  }
+
+  // PATCH /api/v1/users/{uid} 更新
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/{uid}"
+      body : "*"
+    };
+  }
+
+  // DELETE /api/v1/users/{uid} 删除（软删）
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/users/{uid}"
+    };
+  }
+
+  // GET /api/v1/me 当前用户
+  rpc GetMe(google.protobuf.Empty) returns (GetMeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/me"
+    };
+  }
+
+  // PATCH /api/v1/me 更新自己
+  rpc UpdateMe(UpdateMeRequest) returns (UpdateMeResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/me"
+      body : "*"
+    };
+  }
+
+  // POST /api/v1/auth/login 登录
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  // POST /api/v1/auth/refresh 刷新 token
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  // POST /api/v1/me/password 改密码
+  rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/me/password"
+      body: "*"
+    };
+  }
+}
+
+// -------------------- Messages --------------------
+
+message User {
+  string uid        = 1;
+  string username   = 2;
+  string role       = 3;
+  string email      = 4;
+  string nickname   = 5;
+  string avatar_url = 6;
+}
+
+// Create
+
+message CreateUserRequest {
+  string username = 1;
+  string password = 2;
+  string role     = 3;
+  string email    = 4;
+  string nickname = 5;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
+
+// List
+
+message ListUsersRequest {
+  int32  page_size  = 1;
+  string page_token = 2;
+  string filter     = 3;
+  string order_by   = 4;
+}
+
+message ListUsersResponse {
+  repeated User users           = 1;
+  string        next_page_token = 2;
+  int64         total_size      = 3;
+}
+
+// Get
+
+message GetUserRequest {
+  string uid = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+// Update
+
+message UpdateUserRequest {
+  string uid = 1;
+  optional string username   = 2;
+  optional string role       = 3;
+  optional string email      = 4;
+  optional string nickname   = 5;
+  optional string avatar_url = 6;
+}
+
+message UpdateUserResponse {
+  User user = 1;
+}
+
+// Delete
+
+message DeleteUserRequest {
+  string uid = 1;
+}
+
+// Me
+
+message GetMeResponse {
+  User user = 1;
+}
+
+message UpdateMeRequest {
+  optional string username   = 2;
+  optional string role       = 3;
+  optional string email      = 4;
+  optional string nickname   = 5;
+  optional string avatar_url = 6;
+}
+
+message UpdateMeResponse {
+  User user = 1;
+}
+
+// Auth
+
+message LoginRequest {
+  string account   = 1; // username/email/phone
+  string password  = 2;
+  string captcha   = 3;
+  string device_id = 4;
+}
+
+message LoginResponse {
+  TokenPair tokens = 1;
+  User      user   = 2;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  TokenPair tokens = 1;
+}
+
+// Tokens
+message TokenPair {
+  string access_token  = 1;
+  string refresh_token = 2;
+}
+
+// Password
+message ChangePasswordRequest {
+  string old_password = 1;
+  string new_password = 2;
+}

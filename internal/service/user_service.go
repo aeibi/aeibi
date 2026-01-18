@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"path"
 	"strconv"
 	"time"
 
@@ -67,13 +68,25 @@ func (s *UserService) CreateUser(ctx context.Context, req *api.CreateUserRequest
 		if avatarKey, err = s.oss.PutObject(ctx, avatarKey, avatar, "image/png"); err != nil {
 			return fmt.Errorf("upload avatar: %w", err)
 		}
+
+		avatarRow, err := qtx.CreateFile(ctx, db.CreateFileParams{
+			Url:         avatarKey,
+			Name:        path.Base(avatarKey),
+			ContentType: "image/png",
+			Size:        int64(len(avatar)),
+			Checksum:    util.SHA256(avatar),
+			Uploader:    row.Uid,
+		})
+		if err != nil {
+			return fmt.Errorf("save file: %w", err)
+		}
 		resp = &api.CreateUserResponse{
 			User: &api.User{
 				Uid:       row.Uid,
 				Username:  row.Username,
 				Email:     row.Email,
 				Nickname:  row.Nickname,
-				AvatarUrl: row.AvatarUrl,
+				AvatarUrl: avatarRow.Url,
 			},
 		}
 		return nil

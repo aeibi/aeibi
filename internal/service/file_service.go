@@ -1,0 +1,127 @@
+package service
+
+import (
+	"aeibi/api"
+	"aeibi/internal/repository/db"
+	"aeibi/internal/repository/oss"
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"io"
+	"path"
+	"strings"
+
+	"github.com/google/uuid"
+	"google.golang.org/genproto/googleapis/api/httpbody"
+)
+
+type FileService struct {
+	db  *db.Queries
+	dbx *sql.DB
+	oss *oss.OSS
+}
+
+func NewFileService(dbx *sql.DB, ossClient *oss.OSS) *FileService {
+	return &FileService{
+		db:  db.New(dbx),
+		dbx: dbx,
+		oss: ossClient,
+	}
+}
+
+func (s *FileService) UploadFile(ctx context.Context, uploader string, req *api.UploadFileRequest) (*api.UploadFileResponse, error) {
+	contentType := strings.TrimSpace(req.ContentType)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	key := uuid.NewString() + path.Ext(req.Name)
+
+	if _, err := s.oss.PutObject(ctx, key, req.Data, contentType); err != nil {
+		return nil, fmt.Errorf("upload object: %w", err)
+	}
+
+	row, err := s.db.CreateFile(ctx, db.CreateFileParams{
+		Url:         key,
+		Name:        req.Name,
+		ContentType: contentType,
+		Size:        int64(len(req.Data)),
+		Checksum:    req.Checksum,
+		Uploader:    uploader,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("save file: %w", err)
+	}
+
+	return &api.UploadFileResponse{
+		File: &api.File{
+			Name:        row.Name,
+			ContentType: row.ContentType,
+			Size:        row.Size,
+			Checksum:    row.Checksum,
+			Uploader:    row.Uploader,
+			CreatedAt:   row.CreatedAt,
+		},
+		Url: row.Url,
+	}, nil
+}
+
+func (s *FileService) GetFileMeta(ctx context.Context, req *api.GetFileMetaRequest) (*api.GetFileMetaResponse, error) {
+	row, err := s.db.GetFileByURL(ctx, req.Url)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("file not found")
+		}
+		return nil, fmt.Errorf("get file: %w", err)
+	}
+
+	return &api.GetFileMetaResponse{
+		File: &api.File{
+			Name:        row.Name,
+			ContentType: row.ContentType,
+			Size:        row.Size,
+			Checksum:    row.Checksum,
+			Uploader:    row.Uploader,
+			CreatedAt:   row.CreatedAt,
+		},
+		Url: row.Url,
+	}, nil
+}
+
+func (s *FileService) GetFile(ctx context.Context, req *api.GetFileRequest) (*httpbody.HttpBody, error) {
+	row, err := s.db.GetFileByURL(ctx, req.Url)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("file not found")
+		}
+		return nil, fmt.Errorf("get file: %w", err)
+	}
+
+	reader, info, err := s.oss.GetObject(ctx, row.Url)
+	if err != nil {
+		if errors.Is(err, oss.ErrObjectNotFound) {
+			return nil, fmt.Errorf("file not found")
+		}
+		return nil, fmt.Errorf("get object: %w", err)
+	}
+	defer reader.Close()
+
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, fmt.Errorf("read object: %w", err)
+	}
+
+	contentType := row.ContentType
+	if contentType == "" {
+		contentType = info.ContentType
+	}
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	return &httpbody.HttpBody{
+		ContentType: contentType,
+		Data:        data,
+	}, nil
+}

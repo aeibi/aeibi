@@ -5,13 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -49,7 +47,7 @@ const (
 
 	jwtSecret  = ""
 	jwtIssuer  = ""
-	jwtTTL     = time.Second * 200
+	jwtTTL     = 200 * time.Second
 	refreshTTL = 30 * 24 * time.Hour
 )
 
@@ -80,11 +78,15 @@ func main() {
 	postSvc := service.NewPostService(dbConn, ossClient)
 	postHandler := controller.NewPostHandler(postSvc)
 
+	fileSvc := service.NewFileService(dbConn, ossClient)
+	fileHandler := controller.NewFileHandler(fileSvc)
+
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(auth.NewAuthUnaryServerInterceptor(jwtSecret)),
 	)
 	api.RegisterUserServiceServer(grpcServer, userHandler)
 	api.RegisterPostServiceServer(grpcServer, postHandler)
+	api.RegisterFileServiceServer(grpcServer, fileHandler)
 
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
@@ -105,13 +107,17 @@ func main() {
 		slog.Error("register HTTP gateway", "error", err)
 		os.Exit(1)
 	}
+	if err := api.RegisterPostServiceHandlerServer(ctx, mux, postHandler); err != nil {
+		slog.Error("register HTTP gateway", "error", err)
+		os.Exit(1)
+	}
+	if err := api.RegisterFileServiceHandlerServer(ctx, mux, fileHandler); err != nil {
+		slog.Error("register HTTP gateway", "error", err)
+		os.Exit(1)
+	}
 	httpServer := &http.Server{
 		Addr:    httpAddr,
 		Handler: mux,
-	}
-	assetServer := &http.Server{
-		Addr:    assetHTTPAddr,
-		Handler: assetProxyHandler(ossClient),
 	}
 
 	go func() {
@@ -123,20 +129,10 @@ func main() {
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			slog.Warn("HTTP shutdown", "error", err)
 		}
-		if err := assetServer.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("asset HTTP shutdown", "error", err)
-		}
 	}()
 
 	slog.Info("gRPC server listening", "addr", grpcAddr)
 	slog.Info("HTTP gateway listening", "addr", httpAddr)
-	go func() {
-		if err := assetServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("asset HTTP server", "error", err)
-			os.Exit(1)
-		}
-	}()
-	slog.Info("Asset server listening", "addr", assetHTTPAddr)
 
 	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("HTTP server", "error", err)
@@ -201,43 +197,4 @@ func initOSS(ctx context.Context) (*oss.OSS, error) {
 	}
 
 	return oss.New(client, ossBucket), nil
-}
-
-func assetProxyHandler(ossClient *oss.OSS) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		objectPath := path.Clean("/" + strings.TrimPrefix(r.URL.Path, "/"))
-		objectPath = strings.TrimPrefix(objectPath, "/")
-		objectPath = strings.TrimPrefix(objectPath, "assets/")
-		if objectPath == "" || strings.HasPrefix(objectPath, "..") {
-			http.Error(w, "invalid asset path", http.StatusBadRequest)
-			return
-		}
-
-		reader, info, err := ossClient.GetObject(r.Context(), objectPath)
-		if err != nil {
-			if errors.Is(err, oss.ErrObjectNotFound) {
-				http.NotFound(w, r)
-				return
-			}
-			slog.Error("fetch asset", "path", objectPath, "error", err)
-			http.Error(w, "failed to fetch asset", http.StatusInternalServerError)
-			return
-		}
-		defer reader.Close()
-
-		if info.ContentType != "" {
-			w.Header().Set("Content-Type", info.ContentType)
-		}
-		if r.Method == http.MethodHead {
-			return
-		}
-		if _, err := io.Copy(w, reader); err != nil {
-			slog.Warn("stream asset", "path", objectPath, "error", err)
-		}
-	})
 }

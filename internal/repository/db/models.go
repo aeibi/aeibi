@@ -4,6 +4,18 @@
 
 package db
 
+type File struct {
+	ID          int64
+	Url         string
+	Name        string
+	ContentType string
+	Size        int64
+	Checksum    string
+	Uploader    string
+	Status      string
+	CreatedAt   int64
+}
+
 type Post struct {
 	ID              int64
 	Uid             string

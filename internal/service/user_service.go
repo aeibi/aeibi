@@ -2,6 +2,7 @@ package service
 
 import (
 	"aeibi/api"
+	"aeibi/internal/config"
 	"aeibi/internal/repository/db"
 	"aeibi/internal/repository/oss"
 	"aeibi/util"
@@ -21,22 +22,15 @@ type UserService struct {
 	db  *db.Queries
 	dbx *sql.DB
 	oss *oss.OSS
-
-	jwtSecret  string
-	jwtIssuer  string
-	jwtTTL     time.Duration
-	refreshTTL time.Duration
+	cfg *config.Config
 }
 
-func NewUserService(dbx *sql.DB, ossClient *oss.OSS, jwtSecret, jwtIssuer string, jwtTTL, refreshTTL time.Duration) *UserService {
+func NewUserService(dbx *sql.DB, ossClient *oss.OSS, cfg *config.Config) *UserService {
 	return &UserService{
-		db:         db.New(dbx),
-		dbx:        dbx,
-		oss:        ossClient,
-		jwtSecret:  jwtSecret,
-		jwtIssuer:  jwtIssuer,
-		jwtTTL:     jwtTTL,
-		refreshTTL: refreshTTL,
+		db:  db.New(dbx),
+		dbx: dbx,
+		oss: ossClient,
+		cfg: cfg,
 	}
 }
 
@@ -303,7 +297,7 @@ func (s *UserService) Login(ctx context.Context, req *api.LoginRequest) (*api.Lo
 		if _, err := qtx.UpsertRefreshToken(ctx, db.UpsertRefreshTokenParams{
 			Uid:       row.Uid,
 			Token:     refreshToken,
-			ExpiresAt: time.Now().Add(s.refreshTTL).Unix(),
+			ExpiresAt: time.Now().Add(s.cfg.Auth.RefreshTTL).Unix(),
 		}); err != nil {
 			return fmt.Errorf("save refresh token: %w", err)
 		}
@@ -358,7 +352,7 @@ func (s *UserService) RefreshToken(ctx context.Context, uid string, req *api.Ref
 		if _, err := qtx.UpsertRefreshToken(ctx, db.UpsertRefreshTokenParams{
 			Uid:       uid,
 			Token:     refreshToken,
-			ExpiresAt: now.Add(s.refreshTTL).Unix(),
+			ExpiresAt: now.Add(s.cfg.Auth.RefreshTTL).Unix(),
 		}); err != nil {
 			return fmt.Errorf("save refresh token: %w", err)
 		}
@@ -415,7 +409,7 @@ func (s *UserService) nsPtr(p *string) sql.NullString {
 }
 
 func (s *UserService) genToken(uid string) (string, string, error) {
-	accessToken, err := util.GenerateJWT(uid, s.jwtSecret, s.jwtIssuer, s.jwtTTL)
+	accessToken, err := util.GenerateJWT(uid, s.cfg.Auth.JWTSecret, s.cfg.Auth.JWTIssuer, s.cfg.Auth.JWTTTL)
 	if err != nil {
 		return "", "", fmt.Errorf("generate access token: %w", err)
 	}

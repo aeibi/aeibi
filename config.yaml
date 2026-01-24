@@ -1,0 +1,20 @@
+server:
+  grpc_addr: ":9090"
+  http_addr: ":8080"
+
+database:
+  dsn: "file:aeibi.db?_pragma=busy_timeout(5000)&cache=shared"
+  migrations_dir: "internal/repository/db/migration"
+
+oss:
+  endpoint: ""
+  access_key: ""
+  secret_key: ""
+  bucket: ""
+  use_ssl: false
+
+auth:
+  jwt_secret: ""
+  jwt_issuer: ""
+  jwt_ttl: "200s"
+  refresh_ttl: "720h"

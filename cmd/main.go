@@ -2,54 +2,34 @@ package main
 
 import (
 	"context"
-	"database/sql"
-	"errors"
-	"fmt"
 	"log/slog"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"strings"
 	"syscall"
-	"time"
 
-	"aeibi/api"
-	"aeibi/internal/auth"
-	"aeibi/internal/controller"
-	"aeibi/internal/repository/db"
-	"aeibi/internal/repository/oss"
-	"aeibi/internal/service"
+	"aeibi/cmd/server"
+	"aeibi/internal/config"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"google.golang.org/grpc"
-
-	_ "modernc.org/sqlite"
+	"github.com/spf13/cobra"
 )
 
-// config
-const (
-	grpcAddr      = ":9090"
-	httpAddr      = ":8080"
-	assetHTTPAddr = ":8081"
+var rootCmd = &cobra.Command{
+	Use:   "aeibi",
+	Short: "Start the AeiBi backend server",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		configPath, err := cmd.Flags().GetString("config")
+		if err != nil {
+			return err
+		}
 
-	sqliteDSN     = "file:aeibi.db?_pragma=busy_timeout(5000)&cache=shared"
-	migrationsDir = "internal/repository/db/migration"
+		cfg, err := config.Load(configPath)
+		if err != nil {
+			return err
+		}
 
-	ossEndpoint  = ""
-	ossAccessKey = ""
-	ossSecretKey = ""
-	ossBucket    = "aeibi"
-	ossUseSSL    = false
-
-	jwtSecret  = ""
-	jwtIssuer  = ""
-	jwtTTL     = 200 * time.Second
-	refreshTTL = 30 * 24 * time.Hour
-)
+		return server.Run(cmd.Context(), cfg)
+	},
+}
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -59,142 +39,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	dbConn, err := initDB(ctx)
-	if err != nil {
-		slog.Error("init db", "error", err)
+	rootCmd.PersistentFlags().String("config", "", "Path to config file")
+	_ = rootCmd.MarkPersistentFlagRequired("config")
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
+		slog.Error("run", "error", err)
 		os.Exit(1)
 	}
-	defer dbConn.Close()
-
-	ossClient, err := initOSS(ctx)
-	if err != nil {
-		slog.Error("init oss", "error", err)
-		os.Exit(1)
-	}
-
-	userSvc := service.NewUserService(dbConn, ossClient, jwtSecret, jwtIssuer, jwtTTL, refreshTTL)
-	userHandler := controller.NewUserHandler(userSvc)
-
-	postSvc := service.NewPostService(dbConn, ossClient)
-	postHandler := controller.NewPostHandler(postSvc)
-
-	fileSvc := service.NewFileService(dbConn, ossClient)
-	fileHandler := controller.NewFileHandler(fileSvc)
-
-	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.NewAuthUnaryServerInterceptor(jwtSecret)),
-	)
-	api.RegisterUserServiceServer(grpcServer, userHandler)
-	api.RegisterPostServiceServer(grpcServer, postHandler)
-	api.RegisterFileServiceServer(grpcServer, fileHandler)
-
-	lis, err := net.Listen("tcp", grpcAddr)
-	if err != nil {
-		slog.Error("listen gRPC", "error", err)
-		os.Exit(1)
-	}
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			slog.Error("gRPC server", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	mux := runtime.NewServeMux(
-		runtime.WithMetadata(auth.GatewayMetadataExtractor),
-	)
-	if err := api.RegisterUserServiceHandlerServer(ctx, mux, userHandler); err != nil {
-		slog.Error("register HTTP gateway", "error", err)
-		os.Exit(1)
-	}
-	if err := api.RegisterPostServiceHandlerServer(ctx, mux, postHandler); err != nil {
-		slog.Error("register HTTP gateway", "error", err)
-		os.Exit(1)
-	}
-	if err := api.RegisterFileServiceHandlerServer(ctx, mux, fileHandler); err != nil {
-		slog.Error("register HTTP gateway", "error", err)
-		os.Exit(1)
-	}
-	httpServer := &http.Server{
-		Addr:    httpAddr,
-		Handler: mux,
-	}
-
-	go func() {
-		<-ctx.Done()
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		grpcServer.GracefulStop()
-		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			slog.Warn("HTTP shutdown", "error", err)
-		}
-	}()
-
-	slog.Info("gRPC server listening", "addr", grpcAddr)
-	slog.Info("HTTP gateway listening", "addr", httpAddr)
-
-	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("HTTP server", "error", err)
-		os.Exit(1)
-	}
-}
-
-func initDB(ctx context.Context) (*sql.DB, error) {
-	if err := runMigrations(); err != nil {
-		return nil, err
-	}
-
-	dbConn, err := sql.Open("sqlite", sqliteDSN)
-	if err != nil {
-		return nil, fmt.Errorf("open sqlite: %w", err)
-	}
-
-	dbConn.SetMaxOpenConns(1)
-	dbConn.SetMaxIdleConns(1)
-
-	if err := dbConn.PingContext(ctx); err != nil {
-		dbConn.Close()
-		return nil, fmt.Errorf("ping sqlite: %w", err)
-	}
-
-	return dbConn, nil
-}
-
-func runMigrations() error {
-	migrationPath, err := filepath.Abs(migrationsDir)
-	if err != nil {
-		return fmt.Errorf("resolve migrations dir: %w", err)
-	}
-
-	migrationDSN := strings.TrimPrefix(sqliteDSN, "file:")
-	if err := db.Migration(fmt.Sprintf("file://%s", migrationPath), fmt.Sprintf("sqlite://%s", migrationDSN)); err != nil {
-		return fmt.Errorf("run migrations: %w", err)
-	}
-	return nil
-}
-
-func initOSS(ctx context.Context) (*oss.OSS, error) {
-	client, err := minio.New(ossEndpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(ossAccessKey, ossSecretKey, ""),
-		Secure: ossUseSSL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("init minio client: %w", err)
-	}
-
-	bucketCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	exists, err := client.BucketExists(bucketCtx, ossBucket)
-	if err != nil {
-		return nil, fmt.Errorf("check bucket %q: %w", ossBucket, err)
-	}
-	if !exists {
-		if err := client.MakeBucket(bucketCtx, ossBucket, minio.MakeBucketOptions{}); err != nil {
-			return nil, fmt.Errorf("create bucket %q: %w", ossBucket, err)
-		}
-	}
-
-	return oss.New(client, ossBucket), nil
 }

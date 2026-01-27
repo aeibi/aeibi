@@ -15,6 +15,10 @@ import (
 
 // InitDB opens the database connection and pings it to ensure readiness.
 func InitDB(ctx context.Context, cfg config.DatabaseConfig) (*sql.DB, error) {
+	if err := MigrateDB(cfg); err != nil {
+		return nil, fmt.Errorf("migrate database: %w", err)
+	}
+
 	dbConn, err := sql.Open("sqlite", cfg.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)

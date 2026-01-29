@@ -16,6 +16,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Run boots the application with the provided configuration.
@@ -33,6 +34,9 @@ func Run(ctx context.Context, cfg *config.Config) error {
 
 	// Initialize service registrars
 
+	gatewayEndpoint := cfg.Server.GRPCAddr
+	gatewayDialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+
 	// User service
 	userSvc := service.NewUserService(dbConn, ossClient, cfg)
 	userHandler := controller.NewUserHandler(userSvc)
@@ -42,7 +46,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 			api.RegisterUserServiceServer(s, userHandler)
 		},
 		RegisterGateway: func(ctx context.Context, mux *runtime.ServeMux) error {
-			return api.RegisterUserServiceHandlerServer(ctx, mux, userHandler)
+			return api.RegisterUserServiceHandlerFromEndpoint(ctx, mux, gatewayEndpoint, gatewayDialOpts)
 		},
 	}
 
@@ -55,7 +59,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 			api.RegisterPostServiceServer(s, postHandler)
 		},
 		RegisterGateway: func(ctx context.Context, mux *runtime.ServeMux) error {
-			return api.RegisterPostServiceHandlerServer(ctx, mux, postHandler)
+			return api.RegisterPostServiceHandlerFromEndpoint(ctx, mux, gatewayEndpoint, gatewayDialOpts)
 		},
 	}
 
@@ -68,7 +72,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 			api.RegisterFileServiceServer(s, fileHandler)
 		},
 		RegisterGateway: func(ctx context.Context, mux *runtime.ServeMux) error {
-			return api.RegisterFileServiceHandlerServer(ctx, mux, fileHandler)
+			return api.RegisterFileServiceHandlerFromEndpoint(ctx, mux, gatewayEndpoint, gatewayDialOpts)
 		},
 	}
 

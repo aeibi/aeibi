@@ -61,8 +61,11 @@ func (h *UserHandler) UpdateMe(ctx context.Context, req *api.UpdateMeRequest) (*
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
-	if req.Username == nil && req.Email == nil && req.Nickname == nil && req.AvatarUrl == nil {
-		return nil, status.Error(codes.InvalidArgument, "no fields to update")
+	if req.User == nil {
+		return nil, status.Error(codes.InvalidArgument, "user is required")
+	}
+	if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "update_mask is required")
 	}
 	uid, ok := auth.SubjectFromContext(ctx)
 	if !ok {

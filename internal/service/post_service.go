@@ -49,7 +49,9 @@ func (s *PostService) CreatePost(ctx context.Context, uid string, req *api.Creat
 		if err != nil {
 			return fmt.Errorf("create post: %w", err)
 		}
-		resp.Uid = row.Uid.String()
+		resp = &api.CreatePostResponse{
+			Uid: row.Uid.String(),
+		}
 		return nil
 	}); err != nil {
 		return nil, err
@@ -429,19 +431,27 @@ func (s *PostService) ListMyCollections(ctx context.Context, uid string, req *ap
 func (s *PostService) UpdatePost(ctx context.Context, uid string, req *api.UpdatePostRequest) error {
 	if err := db.WithTx(ctx, s.dbx, s.db, func(qtx *db.Queries) error {
 		params := db.UpdatePostByUidAndAuthorParams{
-			Uid:         util.UUID(req.Uid),
-			Author:      util.UUID(uid),
-			Images:      req.Images,
-			Attachments: req.Attachments,
+			Uid:    util.UUID(req.Uid),
+			Author: util.UUID(uid),
 		}
-		if req.Text != nil {
-			params.Text = sql.NullString{String: *req.Text, Valid: true}
+		paths := make(map[string]struct{}, len(req.UpdateMask.GetPaths()))
+		for _, path := range req.UpdateMask.GetPaths() {
+			paths[path] = struct{}{}
 		}
-		if req.Visibility != nil {
-			params.Visibility = db.NullPostVisibility{PostVisibility: db.PostVisibility(*req.Visibility), Valid: true}
+		if _, ok := paths["text"]; ok {
+			params.Text = sql.NullString{String: req.Post.Text, Valid: true}
 		}
-		if req.Pinned != nil {
-			params.Pinned = sql.NullBool{Bool: *req.Pinned, Valid: true}
+		if _, ok := paths["images"]; ok {
+			params.Images = req.Post.Images
+		}
+		if _, ok := paths["attachments"]; ok {
+			params.Attachments = req.Post.Attachments
+		}
+		if _, ok := paths["visibility"]; ok {
+			params.Visibility = db.NullPostVisibility{PostVisibility: db.PostVisibility(req.Post.Visibility), Valid: true}
+		}
+		if _, ok := paths["pinned"]; ok {
+			params.Pinned = sql.NullBool{Bool: req.Post.Pinned, Valid: true}
 		}
 
 		id, err := qtx.UpdatePostByUidAndAuthor(ctx, params)
@@ -451,12 +461,14 @@ func (s *PostService) UpdatePost(ctx context.Context, uid string, req *api.Updat
 			}
 			return fmt.Errorf("update post: %w", err)
 		}
-		err = qtx.UpsertPostTags(ctx, db.UpsertPostTagsParams{
-			PostID: id,
-			Tags:   util.NormalizeStrings(req.Tags),
-		})
-		if err != nil {
-			return fmt.Errorf("update post: %w", err)
+		if _, ok := paths["tags"]; ok {
+			err = qtx.UpsertPostTags(ctx, db.UpsertPostTagsParams{
+				PostID: id,
+				Tags:   util.NormalizeStrings(req.Post.Tags),
+			})
+			if err != nil {
+				return fmt.Errorf("update post: %w", err)
+			}
 		}
 		return nil
 	}); err != nil {

@@ -7,6 +7,7 @@ option go_package = "aeibi/api;api";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 // PostService
 service PostService {
@@ -64,7 +65,7 @@ service PostService {
   rpc UpdatePost(UpdatePostRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       patch: "/api/v1/posts/{uid}"
-      body : "*"
+      body : "post"
     };
   }
 
@@ -178,14 +179,19 @@ message GetPostResponse {
 
 // Update
 
+message UpdatePostBody {
+  string          text        = 1;
+  repeated string images      = 2;
+  repeated string attachments = 3;
+  repeated string tags        = 4;
+  string          visibility  = 5;
+  bool            pinned      = 6;
+}
+
 message UpdatePostRequest {
-  string          uid         = 1;
-  optional string text        = 2;
-  repeated string images      = 3;
-  repeated string attachments = 4;
-  repeated string tags        = 5;
-  optional string visibility  = 6;
-  optional bool   pinned      = 7;
+  string                     uid         = 1;
+  UpdatePostBody             post        = 2;
+  google.protobuf.FieldMask  update_mask = 3;
 }
 
 // Delete

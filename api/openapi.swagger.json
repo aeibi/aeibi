@@ -227,11 +227,11 @@
         },
         "parameters": [
           {
-            "name": "body",
+            "name": "user",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/userUpdateMeRequest"
+              "$ref": "#/definitions/userUpdateMeUser"
             }
           }
         ],
@@ -505,11 +505,11 @@
             "type": "string"
           },
           {
-            "name": "body",
+            "name": "post",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/PostServiceUpdatePostBody"
+              "$ref": "#/definitions/postUpdatePostBody"
             }
           }
         ],
@@ -723,38 +723,6 @@
       "properties": {
         "action": {
           "$ref": "#/definitions/postToggleAction"
-        }
-      }
-    },
-    "PostServiceUpdatePostBody": {
-      "type": "object",
-      "properties": {
-        "text": {
-          "type": "string"
-        },
-        "images": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "attachments": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "visibility": {
-          "type": "string"
-        },
-        "pinned": {
-          "type": "boolean"
         }
       }
     },
@@ -1117,6 +1085,38 @@
       ],
       "default": "TOGGLE_ACTION_UNSPECIFIED"
     },
+    "postUpdatePostBody": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "visibility": {
+          "type": "string"
+        },
+        "pinned": {
+          "type": "boolean"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -1256,7 +1256,7 @@
         "refreshToken"
       ]
     },
-    "userUpdateMeRequest": {
+    "userUpdateMeUser": {
       "type": "object",
       "properties": {
         "username": {

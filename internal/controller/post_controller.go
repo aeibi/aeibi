@@ -116,8 +116,11 @@ func (h *PostHandler) UpdatePost(ctx context.Context, req *api.UpdatePostRequest
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	if req.Text == nil && req.Images == nil && req.Attachments == nil && req.Tags == nil && req.Visibility == nil && req.Pinned == nil {
-		return nil, status.Error(codes.InvalidArgument, "no fields to update")
+	if req.Post == nil {
+		return nil, status.Error(codes.InvalidArgument, "post is required")
+	}
+	if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "update_mask is required")
 	}
 	uid, ok := auth.SubjectFromContext(ctx)
 	if !ok || uid == "" {

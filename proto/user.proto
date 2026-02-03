@@ -7,6 +7,7 @@ option go_package = "aeibi/api;api";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
 
 // UserService
 service UserService {
@@ -36,7 +37,7 @@ service UserService {
   rpc UpdateMe(UpdateMeRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       patch: "/api/v1/me"
-      body : "*"
+      body : "user"
     };
   }
 
@@ -93,11 +94,16 @@ message GetMeResponse {
   User user = 1 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
 }
 
+message UpdateMeUser {
+  string username   = 1;
+  string email      = 2;
+  string nickname   = 3;
+  string avatar_url = 4;
+}
+
 message UpdateMeRequest {
-  optional string username   = 1;
-  optional string email      = 2;
-  optional string nickname   = 3;
-  optional string avatar_url = 4;
+  UpdateMeUser               user        = 1;
+  google.protobuf.FieldMask  update_mask = 2;
 }
 
 // Auth

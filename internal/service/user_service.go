@@ -107,10 +107,22 @@ func (s *UserService) GetMe(ctx context.Context, uid string) (*api.GetMeResponse
 
 func (s *UserService) UpdateMe(ctx context.Context, uid string, req *api.UpdateMeRequest) error {
 	params := db.UpdateUserParams{Uid: util.UUID(uid)}
-	params.Username = s.nsPtr(req.Username)
-	params.Email = s.nsPtr(req.Email)
-	params.Nickname = s.nsPtr(req.Nickname)
-	params.AvatarUrl = s.nsPtr(req.AvatarUrl)
+	paths := make(map[string]struct{}, len(req.UpdateMask.GetPaths()))
+	for _, path := range req.UpdateMask.GetPaths() {
+		paths[path] = struct{}{}
+	}
+	if _, ok := paths["username"]; ok {
+		params.Username = sql.NullString{String: req.User.Username, Valid: true}
+	}
+	if _, ok := paths["email"]; ok {
+		params.Email = sql.NullString{String: req.User.Email, Valid: true}
+	}
+	if _, ok := paths["nickname"]; ok {
+		params.Nickname = sql.NullString{String: req.User.Nickname, Valid: true}
+	}
+	if _, ok := paths["avatar_url"]; ok {
+		params.AvatarUrl = sql.NullString{String: req.User.AvatarUrl, Valid: true}
+	}
 	err := s.db.UpdateUser(ctx, params)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

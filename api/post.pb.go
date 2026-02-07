@@ -75,6 +75,7 @@ type PostAuthor struct {
 	Uid           string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`
 	Nickname      string                 `protobuf:"bytes,2,opt,name=nickname,proto3" json:"nickname,omitempty"`
 	AvatarUrl     string                 `protobuf:"bytes,3,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	IsFollowing   bool                   `protobuf:"varint,4,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -128,6 +129,13 @@ func (x *PostAuthor) GetAvatarUrl() string {
 		return x.AvatarUrl
 	}
 	return ""
+}
+
+func (x *PostAuthor) GetIsFollowing() bool {
+	if x != nil {
+		return x.IsFollowing
+	}
+	return false
 }
 
 type Attachment struct {
@@ -1151,13 +1159,14 @@ var File_post_proto protoreflect.FileDescriptor
 const file_post_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"post.proto\x12\x04post\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"h\n" +
+	"post.proto\x12\x04post\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x90\x01\n" +
 	"\n" +
 	"PostAuthor\x12\x15\n" +
 	"\x03uid\x18\x01 \x01(\tB\x03\xe0A\x02R\x03uid\x12\x1f\n" +
 	"\bnickname\x18\x02 \x01(\tB\x03\xe0A\x02R\bnickname\x12\"\n" +
 	"\n" +
-	"avatar_url\x18\x03 \x01(\tB\x03\xe0A\x02R\tavatarUrl\"\x9e\x01\n" +
+	"avatar_url\x18\x03 \x01(\tB\x03\xe0A\x02R\tavatarUrl\x12&\n" +
+	"\fis_following\x18\x04 \x01(\bB\x03\xe0A\x02R\visFollowing\"\x9e\x01\n" +
 	"\n" +
 	"Attachment\x12\x15\n" +
 	"\x03url\x18\x01 \x01(\tB\x03\xe0A\x02R\x03url\x12\x17\n" +

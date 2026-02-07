@@ -96,9 +96,10 @@ service PostService {
 // -------------------- Messages --------------------
 
 message PostAuthor {
-  string uid        = 1 [(google.api.field_behavior) = REQUIRED];
-  string nickname   = 2 [(google.api.field_behavior) = REQUIRED];
-  string avatar_url = 3 [(google.api.field_behavior) = REQUIRED];
+  string uid          = 1 [(google.api.field_behavior) = REQUIRED];
+  string nickname     = 2 [(google.api.field_behavior) = REQUIRED];
+  string avatar_url   = 3 [(google.api.field_behavior) = REQUIRED];
+  bool   is_following = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message Attachment {

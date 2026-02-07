@@ -43,7 +43,8 @@ func (h *UserHandler) GetUser(ctx context.Context, req *api.GetUserRequest) (*ap
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	return h.svc.GetUser(ctx, req)
+	viewerUid, _ := auth.SubjectFromContext(ctx)
+	return h.svc.GetUser(ctx, viewerUid, req)
 }
 
 func (h *UserHandler) GetMe(ctx context.Context, _ *emptypb.Empty) (*api.GetMeResponse, error) {
@@ -68,10 +69,7 @@ func (h *UserHandler) UpdateMe(ctx context.Context, req *api.UpdateMeRequest) (*
 		return nil, status.Error(codes.InvalidArgument, "update_mask is required")
 	}
 	uid, ok := auth.SubjectFromContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
-	}
-	if uid == "" {
+	if !ok || uid == "" {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
 	if err := h.svc.UpdateMe(ctx, uid, req); err != nil {

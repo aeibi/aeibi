@@ -50,6 +50,8 @@ SELECT uid,
   email,
   nickname,
   avatar_url,
+  followers_count,
+  following_count,
   description,
   status,
   created_at
@@ -59,15 +61,17 @@ WHERE uid = $1
 `
 
 type GetUserByUidRow struct {
-	Uid         uuid.UUID
-	Username    string
-	Role        UserRole
-	Email       string
-	Nickname    string
-	AvatarUrl   string
-	Description string
-	Status      UserStatus
-	CreatedAt   time.Time
+	Uid            uuid.UUID
+	Username       string
+	Role           UserRole
+	Email          string
+	Nickname       string
+	AvatarUrl      string
+	FollowersCount int32
+	FollowingCount int32
+	Description    string
+	Status         UserStatus
+	CreatedAt      time.Time
 }
 
 func (q *Queries) GetUserByUid(ctx context.Context, uid uuid.UUID) (GetUserByUidRow, error) {
@@ -80,6 +84,8 @@ func (q *Queries) GetUserByUid(ctx context.Context, uid uuid.UUID) (GetUserByUid
 		&i.Email,
 		&i.Nickname,
 		&i.AvatarUrl,
+		&i.FollowersCount,
+		&i.FollowingCount,
 		&i.Description,
 		&i.Status,
 		&i.CreatedAt,
@@ -94,6 +100,8 @@ SELECT uid,
   email,
   nickname,
   avatar_url,
+  followers_count,
+  following_count,
   description,
   status,
   created_at,
@@ -104,16 +112,18 @@ WHERE username = $1
 `
 
 type GetUserByUsernameRow struct {
-	Uid          uuid.UUID
-	Username     string
-	Role         UserRole
-	Email        string
-	Nickname     string
-	AvatarUrl    string
-	Description  string
-	Status       UserStatus
-	CreatedAt    time.Time
-	PasswordHash string
+	Uid            uuid.UUID
+	Username       string
+	Role           UserRole
+	Email          string
+	Nickname       string
+	AvatarUrl      string
+	FollowersCount int32
+	FollowingCount int32
+	Description    string
+	Status         UserStatus
+	CreatedAt      time.Time
+	PasswordHash   string
 }
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
@@ -126,6 +136,8 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 		&i.Email,
 		&i.Nickname,
 		&i.AvatarUrl,
+		&i.FollowersCount,
+		&i.FollowingCount,
 		&i.Description,
 		&i.Status,
 		&i.CreatedAt,

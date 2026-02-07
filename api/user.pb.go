@@ -25,15 +25,18 @@ const (
 )
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uid           string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
-	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	Nickname      string                 `protobuf:"bytes,5,opt,name=nickname,proto3" json:"nickname,omitempty"`
-	AvatarUrl     string                 `protobuf:"bytes,6,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Uid            string                 `protobuf:"bytes,1,opt,name=uid,proto3" json:"uid,omitempty"`
+	Username       string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	Role           string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Email          string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Nickname       string                 `protobuf:"bytes,5,opt,name=nickname,proto3" json:"nickname,omitempty"`
+	AvatarUrl      string                 `protobuf:"bytes,6,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	FollowersCount int32                  `protobuf:"varint,7,opt,name=followers_count,json=followersCount,proto3" json:"followers_count,omitempty"`
+	FollowingCount int32                  `protobuf:"varint,8,opt,name=following_count,json=followingCount,proto3" json:"following_count,omitempty"`
+	IsFollowing    bool                   `protobuf:"varint,9,opt,name=is_following,json=isFollowing,proto3" json:"is_following,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -106,6 +109,27 @@ func (x *User) GetAvatarUrl() string {
 		return x.AvatarUrl
 	}
 	return ""
+}
+
+func (x *User) GetFollowersCount() int32 {
+	if x != nil {
+		return x.FollowersCount
+	}
+	return 0
+}
+
+func (x *User) GetFollowingCount() int32 {
+	if x != nil {
+		return x.FollowingCount
+	}
+	return 0
+}
+
+func (x *User) GetIsFollowing() bool {
+	if x != nil {
+		return x.IsFollowing
+	}
+	return false
 }
 
 type CreateUserRequest struct {
@@ -686,15 +710,18 @@ var File_user_proto protoreflect.FileDescriptor
 const file_user_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
-	"user.proto\x12\x04user\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\xb7\x01\n" +
+	"user.proto\x12\x04user\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\xac\x02\n" +
 	"\x04User\x12\x15\n" +
-	"\x03uid\x18\x01 \x01(\tB\x03\xe0A\x02R\x03uid\x12\x1f\n" +
-	"\busername\x18\x02 \x01(\tB\x03\xe0A\x02R\busername\x12\x17\n" +
-	"\x04role\x18\x03 \x01(\tB\x03\xe0A\x02R\x04role\x12\x19\n" +
-	"\x05email\x18\x04 \x01(\tB\x03\xe0A\x02R\x05email\x12\x1f\n" +
+	"\x03uid\x18\x01 \x01(\tB\x03\xe0A\x02R\x03uid\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x17\n" +
+	"\x04role\x18\x03 \x01(\tB\x03\xe0A\x02R\x04role\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x1f\n" +
 	"\bnickname\x18\x05 \x01(\tB\x03\xe0A\x02R\bnickname\x12\"\n" +
 	"\n" +
-	"avatar_url\x18\x06 \x01(\tB\x03\xe0A\x02R\tavatarUrl\"\x87\x01\n" +
+	"avatar_url\x18\x06 \x01(\tB\x03\xe0A\x02R\tavatarUrl\x12,\n" +
+	"\x0ffollowers_count\x18\a \x01(\x05B\x03\xe0A\x02R\x0efollowersCount\x12,\n" +
+	"\x0ffollowing_count\x18\b \x01(\x05B\x03\xe0A\x02R\x0efollowingCount\x12!\n" +
+	"\fis_following\x18\t \x01(\bR\visFollowing\"\x87\x01\n" +
 	"\x11CreateUserRequest\x12\x1f\n" +
 	"\busername\x18\x01 \x01(\tB\x03\xe0A\x02R\busername\x12\x1f\n" +
 	"\bpassword\x18\x02 \x01(\tB\x03\xe0A\x02R\bpassword\x12\x14\n" +

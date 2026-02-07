@@ -285,16 +285,24 @@ type Tag struct {
 }
 
 type User struct {
-	ID           int32
-	Uid          uuid.UUID
-	Username     string
-	Role         UserRole
-	Email        string
-	Nickname     string
-	PasswordHash string
-	AvatarUrl    string
-	Description  string
-	Status       UserStatus
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID             int32
+	Uid            uuid.UUID
+	Username       string
+	Role           UserRole
+	Email          string
+	Nickname       string
+	PasswordHash   string
+	AvatarUrl      string
+	FollowersCount int32
+	FollowingCount int32
+	Description    string
+	Status         UserStatus
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type UserFollow struct {
+	FollowerUid uuid.UUID
+	FolloweeUid uuid.UUID
+	CreatedAt   time.Time
 }

@@ -11,6 +11,8 @@ CREATE TABLE users (
     nickname text NOT NULL UNIQUE,
     password_hash text NOT NULL,
     avatar_url text NOT NULL DEFAULT '',
+    followers_count integer NOT NULL DEFAULT 0,
+    following_count integer NOT NULL DEFAULT 0,
     description text NOT NULL DEFAULT '',
     status user_status NOT NULL DEFAULT 'NORMAL',
     created_at timestamptz NOT NULL DEFAULT now(),

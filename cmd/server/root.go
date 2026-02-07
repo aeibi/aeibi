@@ -50,6 +50,19 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		},
 	}
 
+	// Follow service
+	followSvc := service.NewFollowService(dbConn)
+	followHandler := controller.NewFollowHandler(followSvc)
+	followRegistrar := ServiceRegistrar{
+		Name: "follow",
+		RegisterGRPC: func(s *grpc.Server) {
+			api.RegisterFollowServiceServer(s, followHandler)
+		},
+		RegisterGateway: func(ctx context.Context, mux *runtime.ServeMux) error {
+			return api.RegisterFollowServiceHandlerFromEndpoint(ctx, mux, gatewayEndpoint, gatewayDialOpts)
+		},
+	}
+
 	// Post service
 	postSvc := service.NewPostService(dbConn, ossClient)
 	postHandler := controller.NewPostHandler(postSvc)
@@ -78,6 +91,7 @@ func Run(ctx context.Context, cfg *config.Config) error {
 
 	registrars := []ServiceRegistrar{
 		userRegistrar,
+		followRegistrar,
 		postRegistrar,
 		fileRegistrar,
 	}

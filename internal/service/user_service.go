@@ -64,7 +64,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *api.CreateUserRequest
 	return nil
 }
 
-func (s *UserService) GetUser(ctx context.Context, req *api.GetUserRequest) (*api.GetUserResponse, error) {
+func (s *UserService) GetUser(ctx context.Context, viewerUid string, req *api.GetUserRequest) (*api.GetUserResponse, error) {
 	row, err := s.db.GetUserByUid(ctx, util.UUID(req.Uid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -72,14 +72,27 @@ func (s *UserService) GetUser(ctx context.Context, req *api.GetUserRequest) (*ap
 		}
 		return nil, fmt.Errorf("get user: %w", err)
 	}
+	isFollowing := false
+	if viewerUid != "" && viewerUid != req.Uid {
+		isFollowing, err = s.db.IsFollowing(ctx, db.IsFollowingParams{
+			FollowerUid: util.UUID(viewerUid),
+			FolloweeUid: util.UUID(req.Uid),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("get follow: %w", err)
+		}
+	}
 	return &api.GetUserResponse{
 		User: &api.User{
-			Uid:       row.Uid.String(),
-			Username:  row.Username,
-			Role:      string(row.Role),
-			Email:     row.Email,
-			Nickname:  row.Nickname,
-			AvatarUrl: row.AvatarUrl,
+			Uid: row.Uid.String(),
+			// Username:       row.Username,
+			Role: string(row.Role),
+			// Email:          row.Email,
+			Nickname:       row.Nickname,
+			AvatarUrl:      row.AvatarUrl,
+			FollowersCount: row.FollowersCount,
+			FollowingCount: row.FollowingCount,
+			IsFollowing:    isFollowing,
 		},
 	}, nil
 }
@@ -95,12 +108,15 @@ func (s *UserService) GetMe(ctx context.Context, uid string) (*api.GetMeResponse
 
 	return &api.GetMeResponse{
 		User: &api.User{
-			Uid:       row.Uid.String(),
-			Username:  row.Username,
-			Role:      string(row.Role),
-			Email:     row.Email,
-			Nickname:  row.Nickname,
-			AvatarUrl: row.AvatarUrl,
+			Uid:            row.Uid.String(),
+			Username:       row.Username,
+			Role:           string(row.Role),
+			Email:          row.Email,
+			Nickname:       row.Nickname,
+			AvatarUrl:      row.AvatarUrl,
+			FollowersCount: row.FollowersCount,
+			FollowingCount: row.FollowingCount,
+			IsFollowing:    false,
 		},
 	}, nil
 }

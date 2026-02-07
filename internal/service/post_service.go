@@ -87,9 +87,10 @@ func (s *PostService) GetPost(ctx context.Context, req *api.GetPostRequest) (*ap
 	return &api.GetPostResponse{Post: &api.Post{
 		Uid: postRow.Uid.String(),
 		Author: &api.PostAuthor{
-			Uid:       postRow.AuthorUid.String(),
-			Nickname:  postRow.AuthorNickname,
-			AvatarUrl: postRow.AuthorAvatarUrl,
+			Uid:         postRow.AuthorUid.String(),
+			Nickname:    postRow.AuthorNickname,
+			AvatarUrl:   postRow.AuthorAvatarUrl,
+			IsFollowing: false, // TODO: compute with viewer context
 		},
 		Text:            postRow.Text,
 		Images:          postRow.Images,
@@ -135,9 +136,10 @@ func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPos
 	return &api.GetPostResponse{Post: &api.Post{
 		Uid: postRow.Uid.String(),
 		Author: &api.PostAuthor{
-			Uid:       postRow.AuthorUid.String(),
-			Nickname:  postRow.AuthorNickname,
-			AvatarUrl: postRow.AuthorAvatarUrl,
+			Uid:         postRow.AuthorUid.String(),
+			Nickname:    postRow.AuthorNickname,
+			AvatarUrl:   postRow.AuthorAvatarUrl,
+			IsFollowing: false, // TODO: compute with viewer context
 		},
 		Text:            postRow.Text,
 		Images:          postRow.Images,
@@ -187,9 +189,10 @@ func (s *PostService) ListPosts(ctx context.Context, req *api.ListPostsRequest) 
 		posts = append(posts, &api.Post{
 			Uid: row.Uid.String(),
 			Author: &api.PostAuthor{
-				Uid:       row.AuthorUid.String(),
-				Nickname:  row.AuthorNickname,
-				AvatarUrl: row.AuthorAvatarUrl,
+				Uid:         row.AuthorUid.String(),
+				Nickname:    row.AuthorNickname,
+				AvatarUrl:   row.AuthorAvatarUrl,
+				IsFollowing: false, // TODO: compute with viewer context
 			},
 			Text:            row.Text,
 			Images:          row.Images,
@@ -257,9 +260,10 @@ func (s *PostService) ListPostsByAuthor(ctx context.Context, req *api.ListPostsB
 		posts = append(posts, &api.Post{
 			Uid: row.Uid.String(),
 			Author: &api.PostAuthor{
-				Uid:       row.AuthorUid.String(),
-				Nickname:  row.AuthorNickname,
-				AvatarUrl: row.AuthorAvatarUrl,
+				Uid:         row.AuthorUid.String(),
+				Nickname:    row.AuthorNickname,
+				AvatarUrl:   row.AuthorAvatarUrl,
+				IsFollowing: false, // TODO: compute with viewer context
 			},
 			Text:            row.Text,
 			Images:          row.Images,
@@ -323,9 +327,10 @@ func (s *PostService) ListMyPosts(ctx context.Context, uid string, req *api.List
 		posts = append(posts, &api.Post{
 			Uid: row.Uid.String(),
 			Author: &api.PostAuthor{
-				Uid:       row.AuthorUid.String(),
-				Nickname:  row.AuthorNickname,
-				AvatarUrl: row.AuthorAvatarUrl,
+				Uid:         row.AuthorUid.String(),
+				Nickname:    row.AuthorNickname,
+				AvatarUrl:   row.AuthorAvatarUrl,
+				IsFollowing: false, // TODO: compute with viewer context
 			},
 			Text:            row.Text,
 			Images:          row.Images,
@@ -393,9 +398,10 @@ func (s *PostService) ListMyCollections(ctx context.Context, uid string, req *ap
 		posts = append(posts, &api.Post{
 			Uid: row.Uid.String(),
 			Author: &api.PostAuthor{
-				Uid:       row.AuthorUid.String(),
-				Nickname:  row.AuthorNickname,
-				AvatarUrl: row.AuthorAvatarUrl,
+				Uid:         row.AuthorUid.String(),
+				Nickname:    row.AuthorNickname,
+				AvatarUrl:   row.AuthorAvatarUrl,
+				IsFollowing: false, // TODO: compute with viewer context
 			},
 			Text:            row.Text,
 			Images:          row.Images,

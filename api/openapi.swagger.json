@@ -13,6 +13,9 @@
     },
     {
       "name": "UserService"
+    },
+    {
+      "name": "FollowService"
     }
   ],
   "consumes": [
@@ -276,6 +279,84 @@
         ],
         "tags": [
           "PostService"
+        ]
+      }
+    },
+    "/api/v1/me/followers": {
+      "get": {
+        "summary": "GET /api/v1/me/followers 粉丝列表",
+        "operationId": "FollowService_ListMyFollowers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/followListMyFollowersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursorCreatedAt",
+            "description": "unix seconds",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursorId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FollowService"
+        ]
+      }
+    },
+    "/api/v1/me/following": {
+      "get": {
+        "summary": "GET /api/v1/me/following 关注列表",
+        "operationId": "FollowService_ListMyFollowing",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/followListMyFollowingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cursorCreatedAt",
+            "description": "unix seconds",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursorId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "FollowService"
         ]
       }
     },
@@ -661,6 +742,45 @@
         ]
       }
     },
+    "/api/v1/users/{uid}/follow": {
+      "post": {
+        "summary": "POST /api/v1/users/{uid}/follow 关注或取消关注",
+        "operationId": "FollowService_Follow",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/followFollowResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FollowServiceFollowBody"
+            }
+          }
+        ],
+        "tags": [
+          "FollowService"
+        ]
+      }
+    },
     "/api/v1/users/{uid}/posts": {
       "get": {
         "summary": "GET /api/v1/users/{uid}/posts 指定用户发布的列表（公开）",
@@ -708,6 +828,14 @@
     }
   },
   "definitions": {
+    "FollowServiceFollowBody": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/postToggleAction"
+        }
+      }
+    },
     "PostServiceCollectPostBody": {
       "type": "object",
       "properties": {
@@ -829,6 +957,71 @@
       "required": [
         "file",
         "url"
+      ]
+    },
+    "followFollowResponse": {
+      "type": "object",
+      "properties": {
+        "followingCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "followersCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "followingCount",
+        "followersCount"
+      ]
+    },
+    "followListMyFollowersResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userUser"
+          }
+        },
+        "nextCursorCreatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nextCursorId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "users",
+        "nextCursorCreatedAt",
+        "nextCursorId"
+      ]
+    },
+    "followListMyFollowingResponse": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/userUser"
+          }
+        },
+        "nextCursorCreatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nextCursorId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "users",
+        "nextCursorCreatedAt",
+        "nextCursorId"
       ]
     },
     "postAttachment": {
@@ -1066,12 +1259,16 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "isFollowing": {
+          "type": "boolean"
         }
       },
       "required": [
         "uid",
         "nickname",
-        "avatarUrl"
+        "avatarUrl",
+        "isFollowing"
       ]
     },
     "postToggleAction": {
@@ -1295,15 +1492,26 @@
         },
         "avatarUrl": {
           "type": "string"
+        },
+        "followersCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "followingCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "isFollowing": {
+          "type": "boolean"
         }
       },
       "required": [
         "uid",
-        "username",
         "role",
-        "email",
         "nickname",
-        "avatarUrl"
+        "avatarUrl",
+        "followersCount",
+        "followingCount"
       ]
     }
   }

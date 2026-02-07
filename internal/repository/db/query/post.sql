@@ -82,7 +82,7 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
-WHERE p.uid = $1
+WHERE p.uid = @uid
 LIMIT 1;
 -- name: ListPosts :many
 SELECT p.uid,
@@ -190,60 +190,6 @@ FROM posts p
   AND u.status = 'NORMAL'::user_status
 WHERE p.status = 'NORMAL'::post_status
   AND p.author = @author
-  AND (
-    (
-      sqlc.narg(cursor_created_at)::timestamptz IS NULL
-      AND sqlc.narg(cursor_id)::uuid IS NULL
-    )
-    OR (p.created_at, p.uid) < (
-      sqlc.narg(cursor_created_at)::timestamptz,
-      sqlc.narg(cursor_id)::uuid
-    )
-  )
-ORDER BY p.created_at DESC,
-  p.uid DESC
-LIMIT 20;
--- name: ListPostsByCollector :many
-SELECT p.uid,
-  p.author,
-  u.uid AS author_uid,
-  u.nickname AS author_nickname,
-  u.avatar_url AS author_avatar_url,
-  p.text,
-  p.images,
-  p.attachments,
-  p.comment_count,
-  p.collection_count,
-  p.like_count,
-  p.pinned,
-  p.visibility,
-  p.latest_replied_on,
-  p.ip,
-  p.status,
-  p.created_at,
-  p.updated_at,
-  COALESCE(
-    (
-      SELECT array_agg(
-          t.name
-          ORDER BY t.name
-        )
-      FROM post_tags pt
-        JOIN tags t ON t.id = pt.tag_id
-      WHERE pt.post_id = p.id
-    ),
-    '{}'::text []
-  )::text [] AS tag_names
-FROM post_collections pc
-  JOIN posts p ON p.uid = pc.post_uid
-  JOIN users u ON u.uid = p.author
-  AND u.status = 'NORMAL'::user_status
-WHERE p.status = 'NORMAL'::post_status
-  AND pc.user_uid = @collector
-  AND (
-    p.visibility = 'PUBLIC'::post_visibility
-    OR p.author = @collector
-  )
   AND (
     (
       sqlc.narg(cursor_created_at)::timestamptz IS NULL

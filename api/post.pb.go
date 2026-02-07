@@ -27,22 +27,19 @@ const (
 type ToggleAction int32
 
 const (
-	ToggleAction_TOGGLE_ACTION_UNSPECIFIED ToggleAction = 0
-	ToggleAction_TOGGLE_ACTION_ADD         ToggleAction = 1
-	ToggleAction_TOGGLE_ACTION_REMOVE      ToggleAction = 2
+	ToggleAction_TOGGLE_ACTION_ADD    ToggleAction = 0
+	ToggleAction_TOGGLE_ACTION_REMOVE ToggleAction = 1
 )
 
 // Enum value maps for ToggleAction.
 var (
 	ToggleAction_name = map[int32]string{
-		0: "TOGGLE_ACTION_UNSPECIFIED",
-		1: "TOGGLE_ACTION_ADD",
-		2: "TOGGLE_ACTION_REMOVE",
+		0: "TOGGLE_ACTION_ADD",
+		1: "TOGGLE_ACTION_REMOVE",
 	}
 	ToggleAction_value = map[string]int32{
-		"TOGGLE_ACTION_UNSPECIFIED": 0,
-		"TOGGLE_ACTION_ADD":         1,
-		"TOGGLE_ACTION_REMOVE":      2,
+		"TOGGLE_ACTION_ADD":    0,
+		"TOGGLE_ACTION_REMOVE": 1,
 	}
 )
 
@@ -217,9 +214,9 @@ type Post struct {
 	Images          []string               `protobuf:"bytes,4,rep,name=images,proto3" json:"images,omitempty"`
 	Attachments     []*Attachment          `protobuf:"bytes,5,rep,name=attachments,proto3" json:"attachments,omitempty"`
 	Tags            []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	CommentCount    int64                  `protobuf:"varint,7,opt,name=comment_count,json=commentCount,proto3" json:"comment_count,omitempty"`
-	CollectionCount int64                  `protobuf:"varint,8,opt,name=collection_count,json=collectionCount,proto3" json:"collection_count,omitempty"`
-	LikeCount       int64                  `protobuf:"varint,9,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
+	CommentCount    int32                  `protobuf:"varint,7,opt,name=comment_count,json=commentCount,proto3" json:"comment_count,omitempty"`
+	CollectionCount int32                  `protobuf:"varint,8,opt,name=collection_count,json=collectionCount,proto3" json:"collection_count,omitempty"`
+	LikeCount       int32                  `protobuf:"varint,9,opt,name=like_count,json=likeCount,proto3" json:"like_count,omitempty"`
 	Visibility      string                 `protobuf:"bytes,10,opt,name=visibility,proto3" json:"visibility,omitempty"`
 	LatestRepliedOn int64                  `protobuf:"varint,11,opt,name=latest_replied_on,json=latestRepliedOn,proto3" json:"latest_replied_on,omitempty"`
 	Ip              string                 `protobuf:"bytes,12,opt,name=ip,proto3" json:"ip,omitempty"`
@@ -302,21 +299,21 @@ func (x *Post) GetTags() []string {
 	return nil
 }
 
-func (x *Post) GetCommentCount() int64 {
+func (x *Post) GetCommentCount() int32 {
 	if x != nil {
 		return x.CommentCount
 	}
 	return 0
 }
 
-func (x *Post) GetCollectionCount() int64 {
+func (x *Post) GetCollectionCount() int32 {
 	if x != nil {
 		return x.CollectionCount
 	}
 	return 0
 }
 
-func (x *Post) GetLikeCount() int64 {
+func (x *Post) GetLikeCount() int32 {
 	if x != nil {
 		return x.LikeCount
 	}
@@ -990,7 +987,51 @@ func (x *LikePostRequest) GetAction() ToggleAction {
 	if x != nil {
 		return x.Action
 	}
-	return ToggleAction_TOGGLE_ACTION_UNSPECIFIED
+	return ToggleAction_TOGGLE_ACTION_ADD
+}
+
+type LikePostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Count         int32                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LikePostResponse) Reset() {
+	*x = LikePostResponse{}
+	mi := &file_post_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LikePostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LikePostResponse) ProtoMessage() {}
+
+func (x *LikePostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LikePostResponse.ProtoReflect.Descriptor instead.
+func (*LikePostResponse) Descriptor() ([]byte, []int) {
+	return file_post_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *LikePostResponse) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
 }
 
 type CollectPostRequest struct {
@@ -1003,7 +1044,7 @@ type CollectPostRequest struct {
 
 func (x *CollectPostRequest) Reset() {
 	*x = CollectPostRequest{}
-	mi := &file_post_proto_msgTypes[14]
+	mi := &file_post_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1015,7 +1056,7 @@ func (x *CollectPostRequest) String() string {
 func (*CollectPostRequest) ProtoMessage() {}
 
 func (x *CollectPostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_post_proto_msgTypes[14]
+	mi := &file_post_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1028,7 +1069,7 @@ func (x *CollectPostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CollectPostRequest.ProtoReflect.Descriptor instead.
 func (*CollectPostRequest) Descriptor() ([]byte, []int) {
-	return file_post_proto_rawDescGZIP(), []int{14}
+	return file_post_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CollectPostRequest) GetUid() string {
@@ -1042,7 +1083,51 @@ func (x *CollectPostRequest) GetAction() ToggleAction {
 	if x != nil {
 		return x.Action
 	}
-	return ToggleAction_TOGGLE_ACTION_UNSPECIFIED
+	return ToggleAction_TOGGLE_ACTION_ADD
+}
+
+type CollectPostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Count         int32                  `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CollectPostResponse) Reset() {
+	*x = CollectPostResponse{}
+	mi := &file_post_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CollectPostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CollectPostResponse) ProtoMessage() {}
+
+func (x *CollectPostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_post_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CollectPostResponse.ProtoReflect.Descriptor instead.
+func (*CollectPostResponse) Descriptor() ([]byte, []int) {
+	return file_post_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CollectPostResponse) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
 }
 
 var File_post_proto protoreflect.FileDescriptor
@@ -1071,10 +1156,10 @@ const file_post_proto_rawDesc = "" +
 	"\x06images\x18\x04 \x03(\tB\x06\xe0A\x03\xe0A\x02R\x06images\x12:\n" +
 	"\vattachments\x18\x05 \x03(\v2\x10.post.AttachmentB\x06\xe0A\x03\xe0A\x02R\vattachments\x12\x1a\n" +
 	"\x04tags\x18\x06 \x03(\tB\x06\xe0A\x03\xe0A\x02R\x04tags\x12+\n" +
-	"\rcomment_count\x18\a \x01(\x03B\x06\xe0A\x03\xe0A\x02R\fcommentCount\x121\n" +
-	"\x10collection_count\x18\b \x01(\x03B\x06\xe0A\x03\xe0A\x02R\x0fcollectionCount\x12%\n" +
+	"\rcomment_count\x18\a \x01(\x05B\x06\xe0A\x03\xe0A\x02R\fcommentCount\x121\n" +
+	"\x10collection_count\x18\b \x01(\x05B\x06\xe0A\x03\xe0A\x02R\x0fcollectionCount\x12%\n" +
 	"\n" +
-	"like_count\x18\t \x01(\x03B\x06\xe0A\x03\xe0A\x02R\tlikeCount\x12&\n" +
+	"like_count\x18\t \x01(\x05B\x06\xe0A\x03\xe0A\x02R\tlikeCount\x12&\n" +
 	"\n" +
 	"visibility\x18\n" +
 	" \x01(\tB\x06\xe0A\x03\xe0A\x02R\n" +
@@ -1132,14 +1217,17 @@ const file_post_proto_rawDesc = "" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\"O\n" +
 	"\x0fLikePostRequest\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12*\n" +
-	"\x06action\x18\x02 \x01(\x0e2\x12.post.ToggleActionR\x06action\"R\n" +
+	"\x06action\x18\x02 \x01(\x0e2\x12.post.ToggleActionR\x06action\"0\n" +
+	"\x10LikePostResponse\x12\x1c\n" +
+	"\x05count\x18\x01 \x01(\x05B\x06\xe0A\x03\xe0A\x02R\x05count\"R\n" +
 	"\x12CollectPostRequest\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\tR\x03uid\x12*\n" +
-	"\x06action\x18\x02 \x01(\x0e2\x12.post.ToggleActionR\x06action*^\n" +
-	"\fToggleAction\x12\x1d\n" +
-	"\x19TOGGLE_ACTION_UNSPECIFIED\x10\x00\x12\x15\n" +
-	"\x11TOGGLE_ACTION_ADD\x10\x01\x12\x18\n" +
-	"\x14TOGGLE_ACTION_REMOVE\x10\x022\xa4\b\n" +
+	"\x06action\x18\x02 \x01(\x0e2\x12.post.ToggleActionR\x06action\"3\n" +
+	"\x13CollectPostResponse\x12\x1c\n" +
+	"\x05count\x18\x01 \x01(\x05B\x06\xe0A\x03\xe0A\x02R\x05count*?\n" +
+	"\fToggleAction\x12\x15\n" +
+	"\x11TOGGLE_ACTION_ADD\x10\x00\x12\x18\n" +
+	"\x14TOGGLE_ACTION_REMOVE\x10\x012\xa7\b\n" +
 	"\vPostService\x12Y\n" +
 	"\n" +
 	"CreatePost\x12\x17.post.CreatePostRequest\x1a\x18.post.CreatePostResponse\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/api/v1/posts\x12S\n" +
@@ -1153,8 +1241,8 @@ const file_post_proto_rawDesc = "" +
 	"UpdatePost\x12\x17.post.UpdatePostRequest\x1a\x16.google.protobuf.Empty\"!\x82\xd3\xe4\x93\x02\x1b:\x04post2\x13/api/v1/posts/{uid}\x12Z\n" +
 	"\n" +
 	"DeletePost\x12\x17.post.DeletePostRequest\x1a\x16.google.protobuf.Empty\"\x1b\x82\xd3\xe4\x93\x02\x15*\x13/api/v1/posts/{uid}\x12^\n" +
-	"\bLikePost\x12\x15.post.LikePostRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/posts/{uid}/like\x12g\n" +
-	"\vCollectPost\x12\x18.post.CollectPostRequest\x1a\x16.google.protobuf.Empty\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/posts/{uid}/collectB\x0fZ\raeibi/api;apib\x06proto3"
+	"\bLikePost\x12\x15.post.LikePostRequest\x1a\x16.post.LikePostResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/api/v1/posts/{uid}/like\x12j\n" +
+	"\vCollectPost\x12\x18.post.CollectPostRequest\x1a\x19.post.CollectPostResponse\"&\x82\xd3\xe4\x93\x02 :\x01*\"\x1b/api/v1/posts/{uid}/collectB\x0fZ\raeibi/api;apib\x06proto3"
 
 var (
 	file_post_proto_rawDescOnce sync.Once
@@ -1169,7 +1257,7 @@ func file_post_proto_rawDescGZIP() []byte {
 }
 
 var file_post_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_post_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_post_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_post_proto_goTypes = []any{
 	(ToggleAction)(0),                // 0: post.ToggleAction
 	(*PostAuthor)(nil),               // 1: post.PostAuthor
@@ -1186,9 +1274,11 @@ var file_post_proto_goTypes = []any{
 	(*UpdatePostRequest)(nil),        // 12: post.UpdatePostRequest
 	(*DeletePostRequest)(nil),        // 13: post.DeletePostRequest
 	(*LikePostRequest)(nil),          // 14: post.LikePostRequest
-	(*CollectPostRequest)(nil),       // 15: post.CollectPostRequest
-	(*fieldmaskpb.FieldMask)(nil),    // 16: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),            // 17: google.protobuf.Empty
+	(*LikePostResponse)(nil),         // 15: post.LikePostResponse
+	(*CollectPostRequest)(nil),       // 16: post.CollectPostRequest
+	(*CollectPostResponse)(nil),      // 17: post.CollectPostResponse
+	(*fieldmaskpb.FieldMask)(nil),    // 18: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),            // 19: google.protobuf.Empty
 }
 var file_post_proto_depIdxs = []int32{
 	1,  // 0: post.Post.author:type_name -> post.PostAuthor
@@ -1196,7 +1286,7 @@ var file_post_proto_depIdxs = []int32{
 	3,  // 2: post.ListPostsResponse.posts:type_name -> post.Post
 	3,  // 3: post.GetPostResponse.post:type_name -> post.Post
 	11, // 4: post.UpdatePostRequest.post:type_name -> post.UpdatePostBody
-	16, // 5: post.UpdatePostRequest.update_mask:type_name -> google.protobuf.FieldMask
+	18, // 5: post.UpdatePostRequest.update_mask:type_name -> google.protobuf.FieldMask
 	0,  // 6: post.LikePostRequest.action:type_name -> post.ToggleAction
 	0,  // 7: post.CollectPostRequest.action:type_name -> post.ToggleAction
 	4,  // 8: post.PostService.CreatePost:input_type -> post.CreatePostRequest
@@ -1209,7 +1299,7 @@ var file_post_proto_depIdxs = []int32{
 	12, // 15: post.PostService.UpdatePost:input_type -> post.UpdatePostRequest
 	13, // 16: post.PostService.DeletePost:input_type -> post.DeletePostRequest
 	14, // 17: post.PostService.LikePost:input_type -> post.LikePostRequest
-	15, // 18: post.PostService.CollectPost:input_type -> post.CollectPostRequest
+	16, // 18: post.PostService.CollectPost:input_type -> post.CollectPostRequest
 	5,  // 19: post.PostService.CreatePost:output_type -> post.CreatePostResponse
 	8,  // 20: post.PostService.ListPosts:output_type -> post.ListPostsResponse
 	8,  // 21: post.PostService.ListPostsByAuthor:output_type -> post.ListPostsResponse
@@ -1217,10 +1307,10 @@ var file_post_proto_depIdxs = []int32{
 	8,  // 23: post.PostService.ListMyCollections:output_type -> post.ListPostsResponse
 	10, // 24: post.PostService.GetPost:output_type -> post.GetPostResponse
 	10, // 25: post.PostService.GetMyPost:output_type -> post.GetPostResponse
-	17, // 26: post.PostService.UpdatePost:output_type -> google.protobuf.Empty
-	17, // 27: post.PostService.DeletePost:output_type -> google.protobuf.Empty
-	17, // 28: post.PostService.LikePost:output_type -> google.protobuf.Empty
-	17, // 29: post.PostService.CollectPost:output_type -> google.protobuf.Empty
+	19, // 26: post.PostService.UpdatePost:output_type -> google.protobuf.Empty
+	19, // 27: post.PostService.DeletePost:output_type -> google.protobuf.Empty
+	15, // 28: post.PostService.LikePost:output_type -> post.LikePostResponse
+	17, // 29: post.PostService.CollectPost:output_type -> post.CollectPostResponse
 	19, // [19:30] is the sub-list for method output_type
 	8,  // [8:19] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -1239,7 +1329,7 @@ func file_post_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_post_proto_rawDesc), len(file_post_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

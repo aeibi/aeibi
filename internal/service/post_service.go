@@ -95,9 +95,9 @@ func (s *PostService) GetPost(ctx context.Context, req *api.GetPostRequest) (*ap
 		Images:          postRow.Images,
 		Attachments:     attachments,
 		Tags:            postRow.TagNames,
-		CommentCount:    int64(postRow.CommentCount),
-		CollectionCount: int64(postRow.CollectionCount),
-		LikeCount:       int64(postRow.LikeCount),
+		CommentCount:    postRow.CommentCount,
+		CollectionCount: postRow.CollectionCount,
+		LikeCount:       postRow.LikeCount,
 		Visibility:      string(postRow.Visibility),
 		LatestRepliedOn: postRow.LatestRepliedOn.Unix(),
 		Ip:              postRow.Ip,
@@ -143,9 +143,9 @@ func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPos
 		Images:          postRow.Images,
 		Attachments:     attachments,
 		Tags:            postRow.TagNames,
-		CommentCount:    int64(postRow.CommentCount),
-		CollectionCount: int64(postRow.CollectionCount),
-		LikeCount:       int64(postRow.LikeCount),
+		CommentCount:    postRow.CommentCount,
+		CollectionCount: postRow.CollectionCount,
+		LikeCount:       postRow.LikeCount,
 		Visibility:      string(postRow.Visibility),
 		LatestRepliedOn: postRow.LatestRepliedOn.Unix(),
 		Ip:              postRow.Ip,
@@ -195,9 +195,9 @@ func (s *PostService) ListPosts(ctx context.Context, req *api.ListPostsRequest) 
 			Images:          row.Images,
 			Attachments:     attachments,
 			Tags:            row.TagNames,
-			CommentCount:    int64(row.CommentCount),
-			CollectionCount: int64(row.CollectionCount),
-			LikeCount:       int64(row.LikeCount),
+			CommentCount:    row.CommentCount,
+			CollectionCount: row.CollectionCount,
+			LikeCount:       row.LikeCount,
 			Visibility:      string(row.Visibility),
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
@@ -265,9 +265,9 @@ func (s *PostService) ListPostsByAuthor(ctx context.Context, req *api.ListPostsB
 			Images:          row.Images,
 			Attachments:     attachments,
 			Tags:            row.TagNames,
-			CommentCount:    int64(row.CommentCount),
-			CollectionCount: int64(row.CollectionCount),
-			LikeCount:       int64(row.LikeCount),
+			CommentCount:    row.CommentCount,
+			CollectionCount: row.CollectionCount,
+			LikeCount:       row.LikeCount,
 			Visibility:      string(row.Visibility),
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
@@ -331,9 +331,9 @@ func (s *PostService) ListMyPosts(ctx context.Context, uid string, req *api.List
 			Images:          row.Images,
 			Attachments:     attachments,
 			Tags:            row.TagNames,
-			CommentCount:    int64(row.CommentCount),
-			CollectionCount: int64(row.CollectionCount),
-			LikeCount:       int64(row.LikeCount),
+			CommentCount:    row.CommentCount,
+			CollectionCount: row.CollectionCount,
+			LikeCount:       row.LikeCount,
 			Visibility:      string(row.Visibility),
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
@@ -401,9 +401,9 @@ func (s *PostService) ListMyCollections(ctx context.Context, uid string, req *ap
 			Images:          row.Images,
 			Attachments:     attachments,
 			Tags:            row.TagNames,
-			CommentCount:    int64(row.CommentCount),
-			CollectionCount: int64(row.CollectionCount),
-			LikeCount:       int64(row.LikeCount),
+			CommentCount:    row.CommentCount,
+			CollectionCount: row.CollectionCount,
+			LikeCount:       row.LikeCount,
 			Visibility:      string(row.Visibility),
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
@@ -493,10 +493,60 @@ func (s *PostService) DeletePost(ctx context.Context, uid string, req *api.Delet
 	})
 }
 
-func (s *PostService) LikePost(ctx context.Context, uid string, req *api.LikePostRequest) error {
-	return nil
+func (s *PostService) LikePost(ctx context.Context, uid string, req *api.LikePostRequest) (*api.LikePostResponse, error) {
+	postUid := util.UUID(req.Uid)
+	userUid := util.UUID(uid)
+
+	var (
+		count int32
+		err   error
+	)
+
+	switch req.Action {
+	case api.ToggleAction_TOGGLE_ACTION_ADD:
+		count, err = s.db.AddPostLike(ctx, db.AddPostLikeParams{
+			PostUid: postUid,
+			UserUid: userUid,
+		})
+	default:
+		count, err = s.db.RemovePostLike(ctx, db.RemovePostLikeParams{
+			PostUid: postUid,
+			UserUid: userUid,
+		})
+	}
+	if err != nil {
+		return nil, fmt.Errorf("post like: %w", err)
+	}
+	return &api.LikePostResponse{
+		Count: count,
+	}, nil
 }
 
-func (s *PostService) CollectPost(ctx context.Context, uid string, req *api.CollectPostRequest) error {
-	return nil
+func (s *PostService) CollectPost(ctx context.Context, uid string, req *api.CollectPostRequest) (*api.CollectPostResponse, error) {
+	postUid := util.UUID(req.Uid)
+	userUid := util.UUID(uid)
+
+	var (
+		count int32
+		err   error
+	)
+
+	switch req.Action {
+	case api.ToggleAction_TOGGLE_ACTION_ADD:
+		count, err = s.db.AddPostCollection(ctx, db.AddPostCollectionParams{
+			PostUid: postUid,
+			UserUid: userUid,
+		})
+	default:
+		count, err = s.db.RemovePostCollection(ctx, db.RemovePostCollectionParams{
+			PostUid: postUid,
+			UserUid: userUid,
+		})
+	}
+	if err != nil {
+		return nil, fmt.Errorf("post collection: %w", err)
+	}
+	return &api.CollectPostResponse{
+		Count: count,
+	}, nil
 }

@@ -149,42 +149,30 @@ func (h *PostHandler) DeletePost(ctx context.Context, req *api.DeletePostRequest
 	return &emptypb.Empty{}, nil
 }
 
-func (h *PostHandler) LikePost(ctx context.Context, req *api.LikePostRequest) (*emptypb.Empty, error) {
+func (h *PostHandler) LikePost(ctx context.Context, req *api.LikePostRequest) (*api.LikePostResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	if req.Action == api.ToggleAction_TOGGLE_ACTION_UNSPECIFIED {
-		return nil, status.Error(codes.InvalidArgument, "action is required")
-	}
 	uid, ok := auth.SubjectFromContext(ctx)
 	if !ok || uid == "" {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	if err := h.svc.LikePost(ctx, uid, req); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	return &emptypb.Empty{}, nil
+	return h.svc.LikePost(ctx, uid, req)
 }
 
-func (h *PostHandler) CollectPost(ctx context.Context, req *api.CollectPostRequest) (*emptypb.Empty, error) {
+func (h *PostHandler) CollectPost(ctx context.Context, req *api.CollectPostRequest) (*api.CollectPostResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is nil")
 	}
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	if req.Action == api.ToggleAction_TOGGLE_ACTION_UNSPECIFIED {
-		return nil, status.Error(codes.InvalidArgument, "action is required")
-	}
 	uid, ok := auth.SubjectFromContext(ctx)
 	if !ok || uid == "" {
 		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
-	if err := h.svc.CollectPost(ctx, uid, req); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	return &emptypb.Empty{}, nil
+	return h.svc.CollectPost(ctx, uid, req)
 }

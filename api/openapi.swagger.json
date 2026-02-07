@@ -526,8 +526,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "type": "object",
-              "properties": {}
+              "$ref": "#/definitions/postCollectPostResponse"
             }
           },
           "default": {
@@ -566,8 +565,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "type": "object",
-              "properties": {}
+              "$ref": "#/definitions/postLikePostResponse"
             }
           },
           "default": {
@@ -873,6 +871,19 @@
         "checksum"
       ]
     },
+    "postCollectPostResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "readOnly": true
+        }
+      },
+      "required": [
+        "count"
+      ]
+    },
     "postCreatePostRequest": {
       "type": "object",
       "properties": {
@@ -927,6 +938,19 @@
       },
       "required": [
         "post"
+      ]
+    },
+    "postLikePostResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "readOnly": true
+        }
+      },
+      "required": [
+        "count"
       ]
     },
     "postListPostsResponse": {
@@ -994,18 +1018,18 @@
           "readOnly": true
         },
         "commentCount": {
-          "type": "string",
-          "format": "int64",
+          "type": "integer",
+          "format": "int32",
           "readOnly": true
         },
         "collectionCount": {
-          "type": "string",
-          "format": "int64",
+          "type": "integer",
+          "format": "int32",
           "readOnly": true
         },
         "likeCount": {
-          "type": "string",
-          "format": "int64",
+          "type": "integer",
+          "format": "int32",
           "readOnly": true
         },
         "visibility": {
@@ -1079,11 +1103,10 @@
     "postToggleAction": {
       "type": "string",
       "enum": [
-        "TOGGLE_ACTION_UNSPECIFIED",
         "TOGGLE_ACTION_ADD",
         "TOGGLE_ACTION_REMOVE"
       ],
-      "default": "TOGGLE_ACTION_UNSPECIFIED"
+      "default": "TOGGLE_ACTION_ADD"
     },
     "postUpdatePostBody": {
       "type": "object",

@@ -77,7 +77,7 @@ service PostService {
   }
 
   // POST /api/v1/posts/{uid}/like 点赞或取消赞
-  rpc LikePost(LikePostRequest) returns (google.protobuf.Empty) {
+  rpc LikePost(LikePostRequest) returns (LikePostResponse) {
     option (google.api.http) = {
       post: "/api/v1/posts/{uid}/like"
       body: "*"
@@ -85,7 +85,7 @@ service PostService {
   }
 
   // POST /api/v1/posts/{uid}/collect 收藏或取消收藏
-  rpc CollectPost(CollectPostRequest) returns (google.protobuf.Empty) {
+  rpc CollectPost(CollectPostRequest) returns (CollectPostResponse) {
     option (google.api.http) = {
       post: "/api/v1/posts/{uid}/collect"
       body: "*"
@@ -116,9 +116,9 @@ message Post {
   repeated string     images            = 4 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
   repeated Attachment attachments       = 5 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
   repeated string     tags              = 6 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
-  int64               comment_count     = 7 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
-  int64               collection_count  = 8 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
-  int64               like_count        = 9 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
+  int32               comment_count     = 7 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
+  int32               collection_count  = 8 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
+  int32               like_count        = 9 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
   string              visibility        = 10 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
   int64               latest_replied_on = 11 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
   string              ip                = 12 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
@@ -128,9 +128,8 @@ message Post {
 }
 
 enum ToggleAction {
-  TOGGLE_ACTION_UNSPECIFIED = 0;
-  TOGGLE_ACTION_ADD         = 1;
-  TOGGLE_ACTION_REMOVE      = 2;
+  TOGGLE_ACTION_ADD         = 0;
+  TOGGLE_ACTION_REMOVE      = 1;
 }
 
 // Create
@@ -207,7 +206,15 @@ message LikePostRequest {
   ToggleAction action = 2;
 }
 
+message LikePostResponse {
+  int32 count = 1 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
+}
+
 message CollectPostRequest {
   string       uid    = 1;
   ToggleAction action = 2;
+}
+
+message CollectPostResponse {
+  int32 count = 1 [(google.api.field_behavior) = OUTPUT_ONLY, (google.api.field_behavior) = REQUIRED];
 }

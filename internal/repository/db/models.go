@@ -12,6 +12,48 @@ import (
 	"github.com/google/uuid"
 )
 
+type CommentStatus string
+
+const (
+	CommentStatusNORMAL   CommentStatus = "NORMAL"
+	CommentStatusARCHIVED CommentStatus = "ARCHIVED"
+)
+
+func (e *CommentStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CommentStatus(s)
+	case string:
+		*e = CommentStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CommentStatus: %T", src)
+	}
+	return nil
+}
+
+type NullCommentStatus struct {
+	CommentStatus CommentStatus
+	Valid         bool // Valid is true if CommentStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCommentStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.CommentStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CommentStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCommentStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CommentStatus), nil
+}
+
 type FileStatus string
 
 const (
@@ -258,6 +300,23 @@ type PostCollection struct {
 	PostUid   uuid.UUID
 	UserUid   uuid.UUID
 	CreatedAt time.Time
+}
+
+type PostComment struct {
+	ID               int32
+	Uid              uuid.UUID
+	PostUid          uuid.UUID
+	AuthorUid        uuid.UUID
+	RootUid          uuid.UUID
+	ParentUid        uuid.NullUUID
+	ReplyToAuthorUid uuid.NullUUID
+	Content          string
+	Images           []string
+	ReplyCount       int32
+	Ip               string
+	Status           CommentStatus
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type PostLike struct {

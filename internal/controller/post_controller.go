@@ -41,7 +41,8 @@ func (h *PostHandler) GetPost(ctx context.Context, req *api.GetPostRequest) (*ap
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	return h.svc.GetPost(ctx, req)
+	viewerUid, _ := auth.SubjectFromContext(ctx)
+	return h.svc.GetPost(ctx, viewerUid, req)
 }
 
 func (h *PostHandler) ListPosts(ctx context.Context, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {
@@ -51,7 +52,8 @@ func (h *PostHandler) ListPosts(ctx context.Context, req *api.ListPostsRequest) 
 	if (req.CursorCreatedAt == 0 && req.CursorId != "") || (req.CursorCreatedAt != 0 && req.CursorId == "") {
 		return nil, status.Error(codes.InvalidArgument, "cursor is required")
 	}
-	return h.svc.ListPosts(ctx, req)
+	viewerUid, _ := auth.SubjectFromContext(ctx)
+	return h.svc.ListPosts(ctx, viewerUid, req)
 }
 
 func (h *PostHandler) ListPostsByAuthor(ctx context.Context, req *api.ListPostsByAuthorRequest) (*api.ListPostsResponse, error) {
@@ -64,7 +66,8 @@ func (h *PostHandler) ListPostsByAuthor(ctx context.Context, req *api.ListPostsB
 	if (req.CursorCreatedAt == 0 && req.CursorId != "") || (req.CursorCreatedAt != 0 && req.CursorId == "") {
 		return nil, status.Error(codes.InvalidArgument, "cursor is required")
 	}
-	return h.svc.ListPostsByAuthor(ctx, req)
+	viewerUid, _ := auth.SubjectFromContext(ctx)
+	return h.svc.ListPostsByAuthor(ctx, viewerUid, req)
 }
 
 func (h *PostHandler) ListMyPosts(ctx context.Context, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {

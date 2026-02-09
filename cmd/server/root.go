@@ -89,11 +89,25 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		},
 	}
 
+	// Comment service
+	commentSvc := service.NewCommentService(dbConn)
+	commentHandler := controller.NewCommentHandler(commentSvc)
+	commentRegistrar := ServiceRegistrar{
+		Name: "comment",
+		RegisterGRPC: func(s *grpc.Server) {
+			api.RegisterCommentServiceServer(s, commentHandler)
+		},
+		RegisterGateway: func(ctx context.Context, mux *runtime.ServeMux) error {
+			return api.RegisterCommentServiceHandlerFromEndpoint(ctx, mux, gatewayEndpoint, gatewayDialOpts)
+		},
+	}
+
 	registrars := []ServiceRegistrar{
 		userRegistrar,
 		followRegistrar,
 		postRegistrar,
 		fileRegistrar,
+		commentRegistrar,
 	}
 
 	// Start gRPC server

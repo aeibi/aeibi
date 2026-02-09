@@ -1,10 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "file.proto",
+    "title": "comment.proto",
     "version": "version not set"
   },
   "tags": [
+    {
+      "name": "CommentService"
+    },
     {
       "name": "FileService"
     },
@@ -88,6 +91,117 @@
         ],
         "tags": [
           "UserService"
+        ]
+      }
+    },
+    "/api/v1/comments/{parentUid}/replies": {
+      "post": {
+        "summary": "POST /api/v1/comments/{uid}/replies 回复评论",
+        "operationId": "CommentService_CreateReply",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/commentCreateReplyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parentUid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CommentServiceCreateReplyBody"
+            }
+          }
+        ],
+        "tags": [
+          "CommentService"
+        ]
+      }
+    },
+    "/api/v1/comments/{uid}": {
+      "delete": {
+        "summary": "DELETE /api/v1/comments/{uid} 软删评论",
+        "operationId": "CommentService_DeleteComment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CommentService"
+        ]
+      }
+    },
+    "/api/v1/comments/{uid}/replies": {
+      "get": {
+        "summary": "GET /api/v1/comments/{uid}/replies 回复列表",
+        "operationId": "CommentService_ListReplies",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/commentListRepliesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "uid",
+            "description": "root comment uid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "description": "1-based",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "CommentService"
         ]
       }
     },
@@ -500,6 +614,88 @@
         ]
       }
     },
+    "/api/v1/posts/{postUid}/comments": {
+      "get": {
+        "summary": "GET /api/v1/posts/{post_uid}/comments 一级评论列表",
+        "operationId": "CommentService_ListTopComments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/commentListTopCommentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cursorCreatedAt",
+            "description": "unix seconds",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursorId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CommentService"
+        ]
+      },
+      "post": {
+        "summary": "POST /api/v1/posts/{post_uid}/comments 创建一级评论",
+        "operationId": "CommentService_CreateTopComment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/commentCreateTopCommentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "postUid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CommentServiceCreateTopCommentBody"
+            }
+          }
+        ],
+        "tags": [
+          "CommentService"
+        ]
+      }
+    },
     "/api/v1/posts/{uid}": {
       "get": {
         "summary": "GET /api/v1/posts/{uid} 详情",
@@ -828,6 +1024,34 @@
     }
   },
   "definitions": {
+    "CommentServiceCreateReplyBody": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "content"
+      ]
+    },
+    "CommentServiceCreateTopCommentBody": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "content"
+      ]
+    },
     "FollowServiceFollowBody": {
       "type": "object",
       "properties": {
@@ -874,6 +1098,161 @@
         }
       },
       "description": "Message that represents an arbitrary HTTP body. It should only be used for\npayload formats that can't be represented as JSON, such as raw binary or\nan HTML page.\n\n\nThis message can be used both in streaming and non-streaming API methods in\nthe request as well as the response.\n\nIt can be used as a top-level request field, which is convenient if one\nwants to extract parameters from either the URL or HTTP template into the\nrequest fields and also want access to the raw HTTP body.\n\nExample:\n\n    message GetResourceRequest {\n      // A unique request id.\n      string request_id = 1;\n\n      // The raw HTTP body is bound to this field.\n      google.api.HttpBody http_body = 2;\n\n    }\n\n    service ResourceService {\n      rpc GetResource(GetResourceRequest)\n        returns (google.api.HttpBody);\n      rpc UpdateResource(google.api.HttpBody)\n        returns (google.protobuf.Empty);\n\n    }\n\nExample with streaming methods:\n\n    service CaldavService {\n      rpc GetCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n      rpc UpdateCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n\n    }\n\nUse of this type only changes how the request and response bodies are\nhandled, all other features will continue to work unchanged."
+    },
+    "commentComment": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "author": {
+          "$ref": "#/definitions/commentCommentAuthor"
+        },
+        "postUid": {
+          "type": "string"
+        },
+        "rootUid": {
+          "type": "string"
+        },
+        "parentUid": {
+          "type": "string"
+        },
+        "replyToAuthorUid": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "replyCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "uid",
+        "author",
+        "postUid",
+        "rootUid",
+        "content",
+        "images",
+        "replyCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "commentCommentAuthor": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "avatarUrl": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "nickname",
+        "avatarUrl"
+      ]
+    },
+    "commentCreateReplyResponse": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "replyCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "uid",
+        "replyCount"
+      ]
+    },
+    "commentCreateTopCommentResponse": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        },
+        "commentCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "uid",
+        "commentCount"
+      ]
+    },
+    "commentListRepliesResponse": {
+      "type": "object",
+      "properties": {
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commentComment"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "required": [
+        "comments",
+        "page",
+        "total"
+      ]
+    },
+    "commentListTopCommentsResponse": {
+      "type": "object",
+      "properties": {
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/commentComment"
+          }
+        },
+        "nextCursorCreatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "nextCursorId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "comments",
+        "nextCursorCreatedAt",
+        "nextCursorId"
+      ]
     },
     "fileFile": {
       "type": "object",

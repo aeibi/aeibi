@@ -229,13 +229,6 @@ func (s *UserService) RefreshToken(ctx context.Context, req *api.RefreshTokenReq
 	return resp, nil
 }
 
-func (s *UserService) nsPtr(p *string) sql.NullString {
-	if p == nil {
-		return sql.NullString{}
-	}
-	return sql.NullString{String: *p, Valid: true}
-}
-
 func (s *UserService) genToken(uid string) (string, string, error) {
 	accessToken, err := util.GenerateJWT(uid, s.cfg.Auth.JWTSecret, s.cfg.Auth.JWTIssuer, s.cfg.Auth.JWTTTL)
 	if err != nil {

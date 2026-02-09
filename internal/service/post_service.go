@@ -59,7 +59,7 @@ func (s *PostService) CreatePost(ctx context.Context, uid string, req *api.Creat
 	return resp, nil
 }
 
-func (s *PostService) GetPost(ctx context.Context, req *api.GetPostRequest) (*api.GetPostResponse, error) {
+func (s *PostService) GetPost(ctx context.Context, viewerUid string, req *api.GetPostRequest) (*api.GetPostResponse, error) {
 	postRow, err := s.db.GetPostByUid(ctx, util.UUID(req.Uid))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -157,7 +157,7 @@ func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPos
 	}}, nil
 }
 
-func (s *PostService) ListPosts(ctx context.Context, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {
+func (s *PostService) ListPosts(ctx context.Context, viewerUid string, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {
 	rows, err := s.db.ListPosts(ctx, db.ListPostsParams{
 		CursorCreatedAt: sql.NullTime{Time: time.Unix(req.CursorCreatedAt, 0).UTC(), Valid: req.CursorCreatedAt != 0},
 		CursorID:        uuid.NullUUID{UUID: util.UUID(req.CursorId), Valid: req.CursorId != ""},
@@ -225,7 +225,7 @@ func (s *PostService) ListPosts(ctx context.Context, req *api.ListPostsRequest) 
 	}, nil
 }
 
-func (s *PostService) ListPostsByAuthor(ctx context.Context, req *api.ListPostsByAuthorRequest) (*api.ListPostsResponse, error) {
+func (s *PostService) ListPostsByAuthor(ctx context.Context, viewerUid string, req *api.ListPostsByAuthorRequest) (*api.ListPostsResponse, error) {
 	rows, err := s.db.ListPostsByAuthor(ctx, db.ListPostsByAuthorParams{
 		Author:          util.UUID(req.Uid),
 		CursorCreatedAt: sql.NullTime{Time: time.Unix(req.CursorCreatedAt, 0).UTC(), Valid: req.CursorCreatedAt != 0},

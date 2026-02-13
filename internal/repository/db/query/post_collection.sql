@@ -1,8 +1,7 @@
 -- name: AddPostCollection :one
 WITH inserted AS (
   INSERT INTO post_collections (post_uid, user_uid)
-  VALUES (@post_uid, @user_uid)
-  ON CONFLICT DO NOTHING
+  VALUES (@post_uid, @user_uid) ON CONFLICT DO NOTHING
   RETURNING 1
 ),
 updated AS (
@@ -63,6 +62,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  true AS collected,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
   COALESCE(
     (
       SELECT array_agg(
@@ -75,12 +76,14 @@ SELECT p.uid,
     ),
     '{}'::text []
   )::text [] AS tag_names
-FROM post_collections pc
-  JOIN posts p ON p.uid = pc.post_uid
+FROM post_collections c
+  JOIN posts p ON p.uid = c.post_uid
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = @collector
 WHERE p.status = 'NORMAL'::post_status
-  AND pc.user_uid = @collector
+  AND c.user_uid = @collector
   AND (
     p.visibility = 'PUBLIC'::post_visibility
     OR p.author = @collector

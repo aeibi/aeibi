@@ -67,6 +67,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -82,6 +84,10 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = sqlc.narg(viewer)::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = sqlc.narg(viewer)::uuid
 WHERE p.uid = @uid
 LIMIT 1;
 -- name: ListPosts :many
@@ -103,6 +109,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -118,6 +126,10 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = sqlc.narg(viewer)::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = sqlc.narg(viewer)::uuid
 WHERE p.status = 'NORMAL'::post_status
   AND (
     (
@@ -173,6 +185,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -188,6 +202,10 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = sqlc.narg(viewer)::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = sqlc.narg(viewer)::uuid
 WHERE p.status = 'NORMAL'::post_status
   AND p.author = @author
   AND (

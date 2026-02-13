@@ -17,8 +17,7 @@ import (
 const addPostLike = `-- name: AddPostLike :one
 WITH inserted AS (
   INSERT INTO post_likes (post_uid, user_uid)
-  VALUES ($1, $2)
-  ON CONFLICT DO NOTHING
+  VALUES ($1, $2) ON CONFLICT DO NOTHING
   RETURNING 1
 ),
 updated AS (
@@ -70,6 +69,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  true AS liked,
+  (c.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -82,12 +83,14 @@ SELECT p.uid,
     ),
     '{}'::text []
   )::text [] AS tag_names
-FROM post_likes pc
-  JOIN posts p ON p.uid = pc.post_uid
+FROM post_likes l
+  JOIN posts p ON p.uid = l.post_uid
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_collections c ON c.post_uid = p.uid
+  AND c.user_uid = $1
 WHERE p.status = 'NORMAL'::post_status
-  AND pc.user_uid = $1
+  AND l.user_uid = $1
   AND (
     p.visibility = 'PUBLIC'::post_visibility
     OR p.author = $1
@@ -132,6 +135,8 @@ type ListPostsByLikerRow struct {
 	Status          PostStatus
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Liked           bool
+	Collected       bool
 	TagNames        []string
 }
 
@@ -163,6 +168,8 @@ func (q *Queries) ListPostsByLiker(ctx context.Context, arg ListPostsByLikerPara
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Liked,
+			&i.Collected,
 			pq.Array(&i.TagNames),
 		); err != nil {
 			return nil, err

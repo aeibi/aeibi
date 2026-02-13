@@ -60,7 +60,10 @@ func (s *PostService) CreatePost(ctx context.Context, uid string, req *api.Creat
 }
 
 func (s *PostService) GetPost(ctx context.Context, viewerUid string, req *api.GetPostRequest) (*api.GetPostResponse, error) {
-	postRow, err := s.db.GetPostByUid(ctx, util.UUID(req.Uid))
+	postRow, err := s.db.GetPostByUid(ctx, db.GetPostByUidParams{
+		Uid:    util.UUID(req.Uid),
+		Viewer: uuid.NullUUID{UUID: util.UUID(viewerUid), Valid: viewerUid != ""},
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("post not found")
@@ -103,13 +106,18 @@ func (s *PostService) GetPost(ctx context.Context, viewerUid string, req *api.Ge
 		LatestRepliedOn: postRow.LatestRepliedOn.Unix(),
 		Ip:              postRow.Ip,
 		Pinned:          postRow.Pinned,
+		Liked:           postRow.Liked,
+		Collected:       postRow.Collected,
 		CreatedAt:       postRow.CreatedAt.Unix(),
 		UpdatedAt:       postRow.UpdatedAt.Unix(),
 	}}, nil
 }
 
 func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPostRequest) (*api.GetPostResponse, error) {
-	postRow, err := s.db.GetPostByUid(ctx, util.UUID(req.Uid))
+	postRow, err := s.db.GetPostByUid(ctx, db.GetPostByUidParams{
+		Uid:    util.UUID(req.Uid),
+		Viewer: uuid.NullUUID{UUID: util.UUID(uid), Valid: true},
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("post not found")
@@ -152,6 +160,8 @@ func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPos
 		LatestRepliedOn: postRow.LatestRepliedOn.Unix(),
 		Ip:              postRow.Ip,
 		Pinned:          postRow.Pinned,
+		Liked:           postRow.Liked,
+		Collected:       postRow.Collected,
 		CreatedAt:       postRow.CreatedAt.Unix(),
 		UpdatedAt:       postRow.UpdatedAt.Unix(),
 	}}, nil
@@ -159,6 +169,7 @@ func (s *PostService) GetMyPost(ctx context.Context, uid string, req *api.GetPos
 
 func (s *PostService) ListPosts(ctx context.Context, viewerUid string, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {
 	rows, err := s.db.ListPosts(ctx, db.ListPostsParams{
+		Viewer:          uuid.NullUUID{UUID: util.UUID(viewerUid), Valid: viewerUid != ""},
 		CursorCreatedAt: sql.NullTime{Time: time.Unix(req.CursorCreatedAt, 0).UTC(), Valid: req.CursorCreatedAt != 0},
 		CursorID:        uuid.NullUUID{UUID: util.UUID(req.CursorId), Valid: req.CursorId != ""},
 	})
@@ -205,6 +216,8 @@ func (s *PostService) ListPosts(ctx context.Context, viewerUid string, req *api.
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
 			Pinned:          row.Pinned,
+			Liked:           row.Liked,
+			Collected:       row.Collected,
 			CreatedAt:       row.CreatedAt.Unix(),
 			UpdatedAt:       row.UpdatedAt.Unix(),
 		})
@@ -228,6 +241,7 @@ func (s *PostService) ListPosts(ctx context.Context, viewerUid string, req *api.
 func (s *PostService) ListPostsByAuthor(ctx context.Context, viewerUid string, req *api.ListPostsByAuthorRequest) (*api.ListPostsResponse, error) {
 	rows, err := s.db.ListPostsByAuthor(ctx, db.ListPostsByAuthorParams{
 		Author:          util.UUID(req.Uid),
+		Viewer:          uuid.NullUUID{UUID: util.UUID(viewerUid), Valid: viewerUid != ""},
 		CursorCreatedAt: sql.NullTime{Time: time.Unix(req.CursorCreatedAt, 0).UTC(), Valid: req.CursorCreatedAt != 0},
 		CursorID:        uuid.NullUUID{UUID: util.UUID(req.CursorId), Valid: req.CursorId != ""},
 	})
@@ -276,6 +290,8 @@ func (s *PostService) ListPostsByAuthor(ctx context.Context, viewerUid string, r
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
 			Pinned:          row.Pinned,
+			Liked:           row.Liked,
+			Collected:       row.Collected,
 			CreatedAt:       row.CreatedAt.Unix(),
 			UpdatedAt:       row.UpdatedAt.Unix(),
 		})
@@ -299,6 +315,7 @@ func (s *PostService) ListPostsByAuthor(ctx context.Context, viewerUid string, r
 func (s *PostService) ListMyPosts(ctx context.Context, uid string, req *api.ListPostsRequest) (*api.ListPostsResponse, error) {
 	rows, err := s.db.ListPostsByAuthor(ctx, db.ListPostsByAuthorParams{
 		Author:          util.UUID(uid),
+		Viewer:          uuid.NullUUID{UUID: util.UUID(uid), Valid: true},
 		CursorCreatedAt: sql.NullTime{Time: time.Unix(req.CursorCreatedAt, 0).UTC(), Valid: req.CursorCreatedAt != 0},
 		CursorID:        uuid.NullUUID{UUID: util.UUID(req.CursorId), Valid: req.CursorId != ""},
 	})
@@ -343,6 +360,8 @@ func (s *PostService) ListMyPosts(ctx context.Context, uid string, req *api.List
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
 			Pinned:          row.Pinned,
+			Liked:           row.Liked,
+			Collected:       row.Collected,
 			CreatedAt:       row.CreatedAt.Unix(),
 			UpdatedAt:       row.UpdatedAt.Unix(),
 		})
@@ -414,6 +433,8 @@ func (s *PostService) ListMyCollections(ctx context.Context, uid string, req *ap
 			LatestRepliedOn: row.LatestRepliedOn.Unix(),
 			Ip:              row.Ip,
 			Pinned:          row.Pinned,
+			Liked:           row.Liked,
+			Collected:       row.Collected,
 			CreatedAt:       row.CreatedAt.Unix(),
 			UpdatedAt:       row.UpdatedAt.Unix(),
 		})

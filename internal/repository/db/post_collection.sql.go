@@ -17,8 +17,7 @@ import (
 const addPostCollection = `-- name: AddPostCollection :one
 WITH inserted AS (
   INSERT INTO post_collections (post_uid, user_uid)
-  VALUES ($1, $2)
-  ON CONFLICT DO NOTHING
+  VALUES ($1, $2) ON CONFLICT DO NOTHING
   RETURNING 1
 ),
 updated AS (
@@ -70,6 +69,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  true AS collected,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
   COALESCE(
     (
       SELECT array_agg(
@@ -82,12 +83,14 @@ SELECT p.uid,
     ),
     '{}'::text []
   )::text [] AS tag_names
-FROM post_collections pc
-  JOIN posts p ON p.uid = pc.post_uid
+FROM post_collections c
+  JOIN posts p ON p.uid = c.post_uid
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = $1
 WHERE p.status = 'NORMAL'::post_status
-  AND pc.user_uid = $1
+  AND c.user_uid = $1
   AND (
     p.visibility = 'PUBLIC'::post_visibility
     OR p.author = $1
@@ -132,6 +135,8 @@ type ListPostsByCollectorRow struct {
 	Status          PostStatus
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Collected       bool
+	Liked           bool
 	TagNames        []string
 }
 
@@ -163,6 +168,8 @@ func (q *Queries) ListPostsByCollector(ctx context.Context, arg ListPostsByColle
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Collected,
+			&i.Liked,
 			pq.Array(&i.TagNames),
 		); err != nil {
 			return nil, err

@@ -108,6 +108,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -123,9 +125,18 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
-WHERE p.uid = $1
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = $1::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = $1::uuid
+WHERE p.uid = $2
 LIMIT 1
 `
+
+type GetPostByUidParams struct {
+	Viewer uuid.NullUUID
+	Uid    uuid.UUID
+}
 
 type GetPostByUidRow struct {
 	Uid             uuid.UUID
@@ -146,11 +157,13 @@ type GetPostByUidRow struct {
 	Status          PostStatus
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Liked           bool
+	Collected       bool
 	TagNames        []string
 }
 
-func (q *Queries) GetPostByUid(ctx context.Context, uid uuid.UUID) (GetPostByUidRow, error) {
-	row := q.db.QueryRowContext(ctx, getPostByUid, uid)
+func (q *Queries) GetPostByUid(ctx context.Context, arg GetPostByUidParams) (GetPostByUidRow, error) {
+	row := q.db.QueryRowContext(ctx, getPostByUid, arg.Viewer, arg.Uid)
 	var i GetPostByUidRow
 	err := row.Scan(
 		&i.Uid,
@@ -171,6 +184,8 @@ func (q *Queries) GetPostByUid(ctx context.Context, uid uuid.UUID) (GetPostByUid
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Liked,
+		&i.Collected,
 		pq.Array(&i.TagNames),
 	)
 	return i, err
@@ -195,6 +210,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -210,15 +227,19 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = $1::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = $1::uuid
 WHERE p.status = 'NORMAL'::post_status
   AND (
     (
-      $1::timestamptz IS NULL
-      AND $2::uuid IS NULL
+      $2::timestamptz IS NULL
+      AND $3::uuid IS NULL
     )
     OR (p.created_at, p.uid) < (
-      $1::timestamptz,
-      $2::uuid
+      $2::timestamptz,
+      $3::uuid
     )
   )
 ORDER BY p.created_at DESC,
@@ -227,6 +248,7 @@ LIMIT 20
 `
 
 type ListPostsParams struct {
+	Viewer          uuid.NullUUID
 	CursorCreatedAt sql.NullTime
 	CursorID        uuid.NullUUID
 }
@@ -250,11 +272,13 @@ type ListPostsRow struct {
 	Status          PostStatus
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Liked           bool
+	Collected       bool
 	TagNames        []string
 }
 
 func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]ListPostsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPosts, arg.CursorCreatedAt, arg.CursorID)
+	rows, err := q.db.QueryContext(ctx, listPosts, arg.Viewer, arg.CursorCreatedAt, arg.CursorID)
 	if err != nil {
 		return nil, err
 	}
@@ -281,6 +305,8 @@ func (q *Queries) ListPosts(ctx context.Context, arg ListPostsParams) ([]ListPos
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Liked,
+			&i.Collected,
 			pq.Array(&i.TagNames),
 		); err != nil {
 			return nil, err
@@ -315,6 +341,8 @@ SELECT p.uid,
   p.status,
   p.created_at,
   p.updated_at,
+  (pl.user_uid IS NOT NULL)::boolean AS liked,
+  (pc.user_uid IS NOT NULL)::boolean AS collected,
   COALESCE(
     (
       SELECT array_agg(
@@ -330,16 +358,20 @@ SELECT p.uid,
 FROM posts p
   JOIN users u ON u.uid = p.author
   AND u.status = 'NORMAL'::user_status
+  LEFT JOIN post_likes pl ON pl.post_uid = p.uid
+  AND pl.user_uid = $1::uuid
+  LEFT JOIN post_collections pc ON pc.post_uid = p.uid
+  AND pc.user_uid = $1::uuid
 WHERE p.status = 'NORMAL'::post_status
-  AND p.author = $1
+  AND p.author = $2
   AND (
     (
-      $2::timestamptz IS NULL
-      AND $3::uuid IS NULL
+      $3::timestamptz IS NULL
+      AND $4::uuid IS NULL
     )
     OR (p.created_at, p.uid) < (
-      $2::timestamptz,
-      $3::uuid
+      $3::timestamptz,
+      $4::uuid
     )
   )
 ORDER BY p.created_at DESC,
@@ -348,6 +380,7 @@ LIMIT 20
 `
 
 type ListPostsByAuthorParams struct {
+	Viewer          uuid.NullUUID
 	Author          uuid.UUID
 	CursorCreatedAt sql.NullTime
 	CursorID        uuid.NullUUID
@@ -372,11 +405,18 @@ type ListPostsByAuthorRow struct {
 	Status          PostStatus
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Liked           bool
+	Collected       bool
 	TagNames        []string
 }
 
 func (q *Queries) ListPostsByAuthor(ctx context.Context, arg ListPostsByAuthorParams) ([]ListPostsByAuthorRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPostsByAuthor, arg.Author, arg.CursorCreatedAt, arg.CursorID)
+	rows, err := q.db.QueryContext(ctx, listPostsByAuthor,
+		arg.Viewer,
+		arg.Author,
+		arg.CursorCreatedAt,
+		arg.CursorID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -403,6 +443,8 @@ func (q *Queries) ListPostsByAuthor(ctx context.Context, arg ListPostsByAuthorPa
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Liked,
+			&i.Collected,
 			pq.Array(&i.TagNames),
 		); err != nil {
 			return nil, err
